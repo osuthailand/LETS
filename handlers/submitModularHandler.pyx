@@ -10,6 +10,7 @@ import tornado.gen
 import tornado.web
 
 import secret.achievements.utils
+from common import generalUtils
 from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
@@ -134,7 +135,7 @@ class handler(requestsManager.asyncRequestHandler):
 				ppCalcException = e
 
 			# Restrict obvious cheaters
-			if (glob.conf.config["server"]["relax"] == 0 and s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
+			if (not generalUtils.stringToBool(glob.conf.config["server"]["relax"]) and s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")

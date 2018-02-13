@@ -1,6 +1,7 @@
 import time
 
 from objects import beatmap
+from common import generalUtils
 from common.constants import gameModes
 from common.log import logUtils as log
 from common.ripple import userUtils
@@ -210,7 +211,7 @@ class score:
 		Set this score completed status and rankedScoreIncrease
 		"""
 		self.completed = 0
-		if self.passed == True and scoreUtils.isRankable(self.mods, glob.conf.config["server"]["relax"] != 0):
+		if self.passed == True and scoreUtils.isRankable(self.mods, generalUtils.stringToBool(glob.conf.config["server"]["relax"])):
 			# Get userID
 			userID = userUtils.getID(self.playerName)
 
