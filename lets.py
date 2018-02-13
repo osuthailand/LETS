@@ -185,6 +185,9 @@ if __name__ == "__main__":
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
+		# Is relax?
+		consoleHelper.printColored("Relax is {}!".format(glob.conf.config["server"]["relax"] != 0 and "enabled" or "disabled", bcolors.YELLOW)
+
 		# Discord
 		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):
 			glob.schiavo = schiavo.schiavo(glob.conf.config["discord"]["boturl"], "**lets**")
