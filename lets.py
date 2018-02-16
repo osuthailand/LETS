@@ -11,7 +11,7 @@ from raven.contrib.tornado import AsyncSentryClient
 import redis
 import json
 
-from common.constants import bcolors
+from common.constants import bcolors, mods
 from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
@@ -191,12 +191,12 @@ if __name__ == "__main__":
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
-		# Is relax?
-		allowed_extra_mods = [item for item in glob.conf.extra["rank-mods"] if glob.conf.extra["rank-mods"][item]]
-		consoleHelper.printColored("Additional ranked mods: {}!".format(
-			len(allowed_extra_mods) and ", ".join(allowed_extra_mods) or "None"),
-			bcolors.YELLOW
-			)
+		# Setup allowed mods
+		ranked_mods = [item for item in glob.conf.extra["rankable-mods"] if glob.conf.extra["rankable-mods"][item]]
+		unranked_mods = [item for item in glob.conf.extra["rankable-mods"] if not glob.conf.extra["rankable-mods"][item]]
+		consoleHelper.printColored("Ranked mods  : {}".format(", ".join(ranked_mods)), bcolors.YELLOW)
+		consoleHelper.printColored("Unranked mods: {}".format(", ".join(unranked_mods)), bcolors.YELLOW)
+		glob.conf.extra["_unranked-mods"] = sum([getattr(mods, item) for item in unranked_mods]) # Store the unranked mods mask in glob
 
 		# Discord
 		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):
