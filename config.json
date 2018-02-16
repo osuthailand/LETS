@@ -1,0 +1,9 @@
+{
+    "rank-mods": {
+        "relax": false,
+        "autopilot": false
+    },
+    "submit-config": {
+        "max-std-pp": 700
+    }
+}

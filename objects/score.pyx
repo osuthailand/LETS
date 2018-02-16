@@ -211,7 +211,7 @@ class score:
 		Set this score completed status and rankedScoreIncrease
 		"""
 		self.completed = 0
-		if self.passed == True and scoreUtils.isRankable(self.mods, generalUtils.stringToBool(glob.conf.config["server"]["relax"])):
+		if self.passed == True and scoreUtils.isRankable(self.mods):
 			# Get userID
 			userID = userUtils.getID(self.playerName)
 

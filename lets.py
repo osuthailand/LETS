@@ -9,6 +9,7 @@ import tornado.ioloop
 import tornado.web
 from raven.contrib.tornado import AsyncSentryClient
 import redis
+import json
 
 from common.constants import bcolors
 from common.db import dbConnector
@@ -90,6 +91,11 @@ if __name__ == "__main__":
 		# Read config
 		consoleHelper.printNoNl("> Reading config file... ")
 		glob.conf = config.config("config.ini")
+
+		# Read additional config file
+		consoleHelper.printNoNl("> Loading additional config file... ")
+		with open("config.json", "r") as f:
+			glob.conf.extra = json.load(f)
 
 		if glob.conf.default:
 			# We have generated a default config.ini, quit server
@@ -186,7 +192,11 @@ if __name__ == "__main__":
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
 		# Is relax?
-		consoleHelper.printColored("Relax is {}!".format(generalUtils.stringToBool(glob.conf.config["server"]["relax"]) and "enabled" or "disabled"), bcolors.YELLOW)
+		allowed_extra_mods = [item for item in glob.conf.extra["rank-mods"] if glob.conf.extra["rank-mods"][item]]
+		consoleHelper.printColored("Additional ranked mods: {}!".format(
+			len(allowed_extra_mods) and ", ".join(allowed_extra_mods) or "None"),
+			bcolors.YELLOW
+			)
 
 		# Discord
 		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):

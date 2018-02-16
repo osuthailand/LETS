@@ -135,7 +135,7 @@ class handler(requestsManager.asyncRequestHandler):
 				ppCalcException = e
 
 			# Restrict obvious cheaters
-			if (not generalUtils.stringToBool(glob.conf.config["server"]["relax"]) and s.pp >= 700 and s.gameMode == gameModes.STD) and restricted == False:
+			if (glob.conf.extra["submit-config"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["submit-config"]["max-std-pp"] and s.gameMode == gameModes.STD) and restricted == False:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
