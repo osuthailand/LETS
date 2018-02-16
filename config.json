@@ -4,10 +4,8 @@
         "autopilot": false
     },
     "submit-config": {
-        "max-std-pp": 700
+        "max-std-pp": 700,
+        "score-overwrite": "score"
     },
-    "rank-status": [ 2, 3, 4 ],
-    "scoreboard": {
-        "ppboard": false
-    }
+    "rank-status": [ 2, 3, 4 ]
 }
