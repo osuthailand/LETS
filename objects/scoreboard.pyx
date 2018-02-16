@@ -227,10 +227,10 @@ class scoreboard:
 			# Set personal best score rank
 			self.setPersonalBest()	# sets self.personalBestRank with the huge query
 			self.scores[0].setRank(self.personalBestRank)
-			data += self.scores[0].getData()
+			data += self.scores[0].getData(pp=glob.conf.extra["scoreboard"]["ppboard"])
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
-			data += i.getData(pp=self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0)
+			data += i.getData(pp=glob.conf.extra["scoreboard"]["ppboard"] or (self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0))
 
 		return data
