@@ -41,7 +41,7 @@ class scoreboard:
 		self.scores.append(-1)
 
 		# Make sure the beatmap is ranked
-		if self.beatmap.rankedStatus not in glob.conf.extra["rank-status"]:
+		if self.beatmap.rankedStatus not in glob.conf.extra["allowed-beatmap-rankstatus"]:
 			return
 
 		# Query parts

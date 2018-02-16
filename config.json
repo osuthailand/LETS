@@ -7,7 +7,7 @@
         "max-std-pp": 700,
         "score-overwrite": "score"
     },
-    "rank-status": [ 2, 3, 4 ],
+    "allowed-beatmap-rankstatus": [ 2, 3, 4 ],
     "scoreboard": {
         "ppboard": false
     }

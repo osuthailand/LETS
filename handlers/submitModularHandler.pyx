@@ -120,7 +120,7 @@ class handler(requestsManager.asyncRequestHandler):
 				return
 			
 			# Check if the ranked status is allowed
-			if beatmapInfo.rankedStatus not in glob.conf.extra["rank-status"]:
+			if beatmapInfo.rankedStatus not in glob.conf.extra["allowed-beatmap-rankstatus"]:
 				log.debug("Beatmap's rankstatus is not allowed to be submitted. Score submission aborted.")
 				return
 
