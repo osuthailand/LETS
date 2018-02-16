@@ -118,6 +118,11 @@ class handler(requestsManager.asyncRequestHandler):
 			if beatmapInfo.rankedStatus == rankedStatuses.NOT_SUBMITTED or beatmapInfo.rankedStatus == rankedStatuses.NEED_UPDATE or beatmapInfo.rankedStatus == rankedStatuses.UNKNOWN:
 				log.debug("Beatmap is not submitted/outdated/unknown. Score submission aborted.")
 				return
+			
+			# Check if the ranked status is allowed
+			if beatmapInfo.rankedStatus not in glob.conf.extra["rank-status"]:
+				log.debug("Beatmap's rankstatus is not allowed to be submitted. Score submission aborted.")
+				return
 
 			# Calculate PP
 			# NOTE: PP are std and mania only
