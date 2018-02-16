@@ -108,10 +108,10 @@ class scoreboard:
 			friends = ""
 
 		# Sort and limit at the end
-		if self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
+		if not glob.conf.extra["scoreboard"]["ppboard"] and self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
 			# Order by score if we aren't filtering by mods or autoplay mod is disabled
 			order = "ORDER BY score DESC"
-		elif self.mods & modsEnum.AUTOPLAY > 0:
+		elif self.mods & modsEnum.AUTOPLAY > 0 or glob.conf.extra["scoreboard"]["ppboard"]:
 			# Otherwise, filter by pp
 			order = "ORDER BY pp DESC"
 		limit = "LIMIT 50"
@@ -189,11 +189,13 @@ class scoreboard:
 		if hasScore is None:
 			return
 
+		overwrite = glob.conf.extra["scoreboard"]["ppboard"] and "pp" or "score"
+		
 		# We have a score, run the huge query
 		# Base query
-		query = """SELECT COUNT(*) AS rank FROM scores STRAIGHT_JOIN users ON scores.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores.score >= (
-		SELECT score FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
-		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0"""
+		query = """SELECT COUNT(*) AS rank FROM scores STRAIGHT_JOIN users ON scores.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores.{} >= (
+		SELECT {} FROM scores WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
+		) AND scores.beatmap_md5 = %(md5)s AND scores.play_mode = %(mode)s AND scores.completed = 3 AND users.privileges & 1 > 0""".format(overwrite)
 		# Country
 		if self.country:
 			query += " AND users_stats.country = (SELECT country FROM users_stats WHERE id = %(userid)s LIMIT 1)"
@@ -204,7 +206,7 @@ class scoreboard:
 		if self.friends:
 			query += " AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
 		# Sort and limit at the end
-		query += " ORDER BY score DESC LIMIT 1"
+		query += " ORDER BY {} DESC LIMIT 1".format(overwrite)
 		result = glob.db.fetch(query, {"md5": self.beatmap.fileMD5, "userid": self.userID, "mode": self.gameMode, "mods": self.mods})
 		if result is not None:
 			self.personalBestRank = result["rank"]
