@@ -5,5 +5,9 @@
     },
     "submit-config": {
         "max-std-pp": 700
+    },
+    "rank-status": [ 2, 3, 4 ],
+    "scoreboard": {
+        "ppboard": false
     }
 }
