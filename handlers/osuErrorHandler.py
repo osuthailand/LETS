@@ -29,7 +29,7 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			# Write error file to .data folder
 			with open(".data/clienterrors/{}.json".format(errorID), "wb") as f:
-				f.write(json.dumps(self.request.arguments))
+				f.write(json.dumps({ k: self.get_argument(k) for k in self.request.arguments }))
 
 			# Output
 			log.info("New client-error from {}:{} ({})".format(self.get_argument("u"), self.get_argument("i"), errorID))
