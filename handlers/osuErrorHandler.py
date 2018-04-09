@@ -24,7 +24,7 @@ class handler(requestsManager.asyncRequestHandler):
 			found = False
 			errorID = ""
 			while not found:
-				errorID = generalUtils.randomString(8)
+				errorID = generalUtils.randomString(16)
 				if not os.path.isfile(".data/clienterrors/{}.json".format(errorID)):
 					found = True
 			
