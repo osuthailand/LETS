@@ -10,7 +10,8 @@ from constants import exceptions
 from common import generalUtils
 
 MODULE_NAME = "clienterror"
-REQUIRED_DATA = ["u", "osumode", "gamemode", "gametime", "audiotime", "culture", "b", "bc", "exception", "feedback", "stacktrace", "iltrace", "version", "exehash", "config"]
+REQUIRED_DATA = ["u", "osumode", "gamemode", "gametime", "audiotime", "culture", "b", "bc", "exception", "feedback", "stacktrace", "iltrace", "version", "exehash"]
+IGNORE_DATA = ["config"]
 class handler(requestsManager.asyncRequestHandler):
 	@tornado.web.asynchronous
 	@tornado.gen.engine
@@ -27,6 +28,12 @@ class handler(requestsManager.asyncRequestHandler):
 				if not os.path.isfile(".data/clienterrors/{}.json".format(errorID)):
 					found = True
 			
+			# Remove data we do not want
+			# Ether due to not usefull or because it includes info that we do not want or need
+			for ignore in IGNORE_DATA:
+				if ignore in self.request.arguments:
+					del(self.request.arguments[ignore])
+
 			# Write error file to .data folder
 			with open(".data/clienterrors/{}.json".format(errorID), "wb") as f:
 				f.write(json.dumps({ k: self.get_argument(k).decode('utf-8') for k in self.request.arguments }))
