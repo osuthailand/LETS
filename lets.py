@@ -86,6 +86,7 @@ def make_app():
 		(r"/loadTest", loadTestHandler.handler),
 	], default_handler_class=defaultHandler.handler)
 
+
 if __name__ == "__main__":
 	try:
 		consoleHelper.printServerStartHeader(True)
@@ -117,9 +118,20 @@ if __name__ == "__main__":
 
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
+<<<<<<< HEAD
 		paths = [".data", ".data/replays", ".data/screenshots",
 				 ".data/clienterrors", ".data/oppai", ".data/oppai/maps",
 				 ".data/catch_the_pp", ".data/catch_the_pp/maps"]
+=======
+		paths = [
+			".data",
+			".data/replays",
+			".data/screenshots",
+			".data/oppai",
+			".data/catch_the_pp",
+			".data/beatmaps"
+		]
+>>>>>>> ca2d56041350d7d966d1fd1fe8eb8c66e7c01501
 		for i in paths:
 			if not os.path.exists(i):
 				os.makedirs(i, 0o770)
@@ -239,18 +251,17 @@ if __name__ == "__main__":
 		except:
 			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
-
-		# Server start message and console output
-		consoleHelper.printColored("> L.E.T.S. is listening for clients on 127.0.0.1:{}...".format(serverPort), bcolors.GREEN)
-		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
-
 		# Connect to pubsub channels
 		pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
 		}).start()
 
+		# Server start message and console output
+		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(glob.conf.config["server"]["host"], serverPort), bcolors.GREEN)
+		log.logMessage("Server started!", discord="bunker", of="info.txt", stdout=False)
+
 		# Start Tornado
-		glob.application.listen(serverPort)
+		glob.application.listen(serverPort, address=glob.conf.config["server"]["host"])
 		tornado.ioloop.IOLoop.instance().start()
 	finally:
 		# Perform some clean up

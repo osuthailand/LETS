@@ -1,7 +1,9 @@
+import base64
 import collections
 import json
 import os
 import sys
+import threading
 import traceback
 from urllib.parse import urlencode
 
@@ -18,13 +20,13 @@ from common.ripple import userUtils
 from common.web import requestsManager
 from constants import exceptions
 from constants import rankedStatuses
-from helpers import aeshelper
+from helpers import aeshelper, replayHelper
 from helpers import leaderboardHelper
 from objects import beatmap
 from objects import glob
 from objects import score
 from objects import scoreboard
-from secret import butterCake, achievements
+from secret import butterCake
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
@@ -218,24 +220,47 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.completed == 3 and "pl" in self.request.arguments:
 				butterCake.bake(self, s)
 
-			# Save replay
-			if s.passed == True and s.completed == 3:
-				if "score" not in self.request.files:
-					if not restricted:
-						# Ban if no replay passed
-						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score (most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(username, userID, s.fileMd5), "cm")
-				else:
-					# Otherwise, save the replay
+			# Save replay for all passed scores
+			# Make sure the score has an id as well (duplicated?, query error?)
+			if s.passed and s.scoreID > 0:
+				if "score" in self.request.files:
+					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
 					with open(".data/replays/replay_{}.osr".format(s.scoreID), "wb") as f:
 						f.write(replay)
 
-			# Make sure the replay has been saved (debug)
-			if not os.path.isfile(".data/replays/replay_{}.osr".format(s.scoreID)) and s.completed == 3:
-				log.error("Replay for score {} not saved!!".format(s.scoreID), "bunker")
+					# Send to cono ALL passed replays, even non high-scores
+					if glob.conf.config["cono"]["enable"]:
+						# We run this in a separate thread to avoid slowing down scores submission,
+						# as cono needs a full replay
+						threading.Thread(target=lambda: glob.redis.publish(
+							"cono:analyze", json.dumps({
+								"score_id": s.scoreID,
+								"beatmap_id": beatmapInfo.beatmapID,
+								"user_id": s.playerUserID,
+								"game_mode": s.gameMode,
+								"pp": s.pp,
+								"replay_data": base64.b64encode(
+									replayHelper.buildFullReplay(
+										s.scoreID,
+										rawReplay=self.request.files["score"][0]["body"]
+									)
+								).decode(),
+							})
+						)).start()
+				else:
+					# Restrict if no replay was provided
+					if not restricted:
+						userUtils.restrict(userID)
+						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
+													  "(most likely he used a score submitter)")
+						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+							username, userID, s.fileMd5
+						), "cm")
+
+			# Update beatmap playcount (and passcount)
+			beatmap.incrementPlaycount(s.fileMd5, s.passed)
 
 			# Let the api know of this score
 			if s.scoreID:
@@ -244,13 +269,9 @@ class handler(requestsManager.asyncRequestHandler):
 			# Re-raise pp calc exception after saving score, cake, replay etc
 			# so Sentry can track it without breaking score submission
 			if ppCalcException is not None:
-				raise ppCalcException
+				raise ppCalcException()
 
-			# If there was no exception, update stats and build score submitted panel
-			# We don't have to do that since stats are recalculated with the cron
-			# Update beatmap playcount (and passcount)
-			beatmap.incrementPlaycount(s.fileMd5, s.passed)
-
+            # If there was no exception, update stats and build score submitted panel
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
