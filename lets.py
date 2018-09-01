@@ -16,7 +16,6 @@ from common.db import dbConnector
 from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
-from common.ripple import scoreUtils
 from common.web import schiavo
 from handlers import apiCacheBeatmapHandler
 from handlers import apiPPHandler
@@ -39,10 +38,11 @@ from handlers import osuSearchSetHandler
 from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
+from handlers import commentHandler
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
-from helpers import leaderboardHelper
+from common import agpl
 from objects import glob
 from pubSubHandlers import beatmapUpdateHandler
 import secret.achievements.utils
@@ -59,6 +59,7 @@ def make_app():
 		(r"/web/osu-search-set.php", osuSearchSetHandler.handler),
 		(r"/web/check-updates.php", checkUpdatesHandler.handler),
 		(r"/web/osu-error.php", osuErrorHandler.handler),
+		(r"/web/osu-comment.php", commentHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
@@ -88,6 +89,13 @@ def make_app():
 
 
 if __name__ == "__main__":
+	# AGPL license agreement
+	try:
+		agpl.check_license("ripple", "LETS")
+	except agpl.LicenseError as e:
+		print(str(e))
+		sys.exit(1)
+
 	try:
 		consoleHelper.printServerStartHeader(True)
 
@@ -230,7 +238,7 @@ if __name__ == "__main__":
 		try:
 			glob.sentry = generalUtils.stringToBool(glob.conf.config["sentry"]["enable"])
 			if glob.sentry:
-				glob.application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dns"], release=glob.VERSION)
+				glob.application.sentry_client = AsyncSentryClient(glob.conf.config["sentry"]["dsn"], release=glob.VERSION)
 			else:
 				consoleHelper.printColored("[!] Warning! Sentry logging is disabled!", bcolors.YELLOW)
 		except:
