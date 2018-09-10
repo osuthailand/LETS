@@ -79,6 +79,7 @@ def make_app():
 		(r"/letsapi/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
 
 		# Not done yet
+		(r"/web/osu-addfavourite.php", osuErrorHandler.handler), # I use the error handler as I want an empty response for the time being
 		(r"/web/lastfm.php", emptyHandler.handler),
 		(r"/web/osu-rate.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
