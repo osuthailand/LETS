@@ -226,7 +226,7 @@ class score:
 			# No duplicates found.
 			# Get right "completed" value
 			personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
-					glob.conf.extra["submit-config"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["submit-config"]["score-overwrite"])
+					glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
 				),
 				[userID, self.fileMd5, self.gameMode])
 			if personalBest is None:
@@ -236,7 +236,7 @@ class score:
 				self.oldPersonalBest = 0
 			else:
 				# Compare personal best's score with current score
-				if getattr(self, glob.conf.extra["submit-config"]["score-overwrite"]) > personalBest[glob.conf.extra["submit-config"]["score-overwrite"]]:
+				if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
 					# New best score
 					self.completed = 3
 					self.rankedScoreIncrease = self.score-personalBest["score"]

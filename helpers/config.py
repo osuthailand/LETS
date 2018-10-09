@@ -10,6 +10,7 @@ class config:
 	"""
 
 	config = configparser.ConfigParser()
+	extra = {}
 	fileName = ""		# config filename
 	default = True
 
@@ -30,7 +31,6 @@ class config:
 			# config.ini not found, generate a default one
 			self.generateDefaultConfig()
 			self.default = True
-
 
 	# Check if config.ini has all needed the keys
 	def checkConfig(self):
@@ -81,6 +81,8 @@ class config:
 			self.config.get("discord", "secretwebhook")
 
 			self.config.get("cono", "enable")
+
+			self.config.get("custom", "config")
 			return True
 		except:
 			return False
@@ -142,6 +144,9 @@ class config:
 
 		self.config.add_section("cono")
 		self.config.set("cono", "enable", "False")
+
+		self.config.add_section("custom")
+		self.config.set("custom", "config", "common/config.json")
 
 		# Write ini to file and close
 		self.config.write(f)

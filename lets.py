@@ -9,7 +9,12 @@ import tornado.ioloop
 import tornado.web
 from raven.contrib.tornado import AsyncSentryClient
 import redis
+
 import json
+import shutil
+from distutils.version import LooseVersion
+
+from constants import rankedStatuses
 
 from common.constants import bcolors, mods
 from common.db import dbConnector
@@ -103,11 +108,6 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Reading config file... ")
 		glob.conf = config.config("config.ini")
 
-		# Read additional config file
-		consoleHelper.printNoNl("> Loading additional config file... ")
-		with open("config.json", "r") as f:
-			glob.conf.extra = json.load(f)
-
 		if glob.conf.default:
 			# We have generated a default config.ini, quit server
 			consoleHelper.printWarning()
@@ -123,6 +123,34 @@ if __name__ == "__main__":
 			sys.exit()
 		else:
 			consoleHelper.printDone()
+
+		# Read additional config file
+		consoleHelper.printNoNl("> Loading additional config file... ")
+		try:
+			if not os.path.isfile(glob.conf.config["custom"]["config"]):
+				consoleHelper.printWarning()
+				consoleHelper.printColored("[!] Missing config file at {}; A default one has been generated at this location.".format(glob.conf.config["custom"]["config"]), bcolors.YELLOW)
+				shutil.copy("common/default_config.json", glob.conf.config["custom"]["config"])
+
+			with open(glob.conf.config["custom"]["config"], "r") as f:
+				glob.conf.extra = json.load(f)
+
+			consoleHelper.printDone()
+		except:
+			consoleHelper.printWarning()
+			consoleHelper.printColored("[!] Unable to load custom config at {}".format(glob.conf.config["custom"]["config"]), bcolors.RED)
+			consoleHelper.printColored("[!] Make sure you have the latest osufx common submodule!", bcolors.RED)
+			sys.exit()
+
+		# Check if running common module is usable
+		if glob.COMMON_VERSION == "Unknown":
+			consoleHelper.printWarning()
+			consoleHelper.printColored("[!] You do not seem to be using osufx's common submodule... nothing will work...", bcolors.RED)
+			consoleHelper.printColored("[!] You can download or fork the submodule from {}https://github.com/osufx/ripple-python-common".format(bcolors.UNDERLINE), bcolors.RED)
+			sys.exit()
+		elif LooseVersion(glob.COMMON_VERSION_REQ) > LooseVersion(glob.COMMON_VERSION):
+			consoleHelper.printColored("[!] Your common submodule version is below the required version number for this version of lets.", bcolors.RED)
+			consoleHelper.printColored("[!] You are highly adviced to update your common submodule as stability may vary with outdated modules.", bcolors.RED)
 
 		# Create data/oppai maps folder if needed
 		consoleHelper.printNoNl("> Checking folders... ")
@@ -207,12 +235,17 @@ if __name__ == "__main__":
 		glob.redis.set("lets:achievements_version", glob.ACHIEVEMENTS_VERSION)
 		consoleHelper.printColored("Achievements version is {}".format(glob.ACHIEVEMENTS_VERSION), bcolors.YELLOW)
 
-		# Setup allowed mods
-		ranked_mods = [item for item in glob.conf.extra["rankable-mods"] if glob.conf.extra["rankable-mods"][item]]
-		unranked_mods = [item for item in glob.conf.extra["rankable-mods"] if not glob.conf.extra["rankable-mods"][item]]
-		consoleHelper.printColored("Ranked mods  : {}".format(", ".join(ranked_mods)), bcolors.YELLOW)
+		# Print disallowed mods into console (Used to also assign it into variable but has been moved elsewhere)
+		unranked_mods = [key for key, value in glob.conf.extra["common"]["rankable-mods"].items() if not value]
 		consoleHelper.printColored("Unranked mods: {}".format(", ".join(unranked_mods)), bcolors.YELLOW)
-		glob.conf.extra["_unranked-mods"] = sum([getattr(mods, item) for item in unranked_mods]) # Store the unranked mods mask in glob
+		
+		# Print allowed beatmap rank statuses
+		allowed_beatmap_rank = [key for key, value in glob.conf.extra["lets"]["allowed-beatmap-rankstatus"].items() if value]
+		consoleHelper.printColored("Allowed beatmap rank statuses: {}".format(", ".join(allowed_beatmap_rank)), bcolors.YELLOW)
+
+		# Make array of bools to respective rank id's
+		glob.conf.extra["_allowed_beatmap_rank"] = [getattr(rankedStatuses, key) for key in allowed_beatmap_rank] # Store the allowed beatmap rank id's into glob
+
 
 		# Discord
 		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):

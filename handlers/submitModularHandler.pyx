@@ -123,12 +123,12 @@ class handler(requestsManager.asyncRequestHandler):
 			beatmapInfo.setDataFromDB(s.fileMd5)
 
 			# Make sure the beatmap is submitted and updated
-			if beatmapInfo.rankedStatus == rankedStatuses.NOT_SUBMITTED or beatmapInfo.rankedStatus == rankedStatuses.NEED_UPDATE or beatmapInfo.rankedStatus == rankedStatuses.UNKNOWN:
-				log.debug("Beatmap is not submitted/outdated/unknown. Score submission aborted.")
-				return
-			
+			#if beatmapInfo.rankedStatus == rankedStatuses.NOT_SUBMITTED or beatmapInfo.rankedStatus == rankedStatuses.NEED_UPDATE or beatmapInfo.rankedStatus == rankedStatuses.UNKNOWN:
+			#	log.debug("Beatmap is not submitted/outdated/unknown. Score submission aborted.")
+			#	return
+
 			# Check if the ranked status is allowed
-			if beatmapInfo.rankedStatus not in glob.conf.extra["allowed-beatmap-rankstatus"]:
+			if beatmapInfo.rankedStatus not in glob.conf.extra["_allowed_beatmap_rank"]:
 				log.debug("Beatmap's rankstatus is not allowed to be submitted. Score submission aborted.")
 				return
 
@@ -147,7 +147,7 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
-			if (glob.conf.extra["submit-config"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["submit-config"]["max-std-pp"] and s.gameMode == gameModes.STD) and restricted == False:
+			if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and restricted == False:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
