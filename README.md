@@ -1,9 +1,9 @@
-## LETS [![Code Health](https://landscape.io/github/osuripple/lets/master/landscape.svg?style=flat)](https://landscape.io/github/osuripple/lets/master)
+## LETS
 
 - Origin: https://zxq.co/ripple/lets
 - Mirror: https://github.com/osuripple/lets
 
-## Latest Essential Tatoe Server
+## Loving Every Things in your Sister
 This server handles every non real time client feature, so:
 - Ingame scoreboards
 - Score submission
