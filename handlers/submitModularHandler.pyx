@@ -121,6 +121,9 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
 
+			# Get variables for relax
+			used_mods = int(scoreData[13])
+			
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
 			s = score.score()
@@ -160,10 +163,20 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
-			if (s.pp >= 700 and s.gameMode == gameModes.STD) and not restricted:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+			# Restrict obvious cheaters
+                        if restricted == False:
+                                        if (s.pp >= 2147483647) and userID != 1000: # Aoba is too pro for this game.
+                                                userUtils.restrict(userID)
+                                                userUtils.appendNotes(userID, "[osu!] AOBA IS GAMING MODE ({}pp).".format(s.pp))
+                                                log.warning("[osu!] **{}** ({}) has been rekt by osu! due to too high pp gain with his god mode **({}pp)**.".format(username, userID, s.pp), "cm")
+                                        elif (s.pp >= 3000):
+                                                userUtils.restrict(userID)
+                                                userUtils.appendNotes(userID, "[osu!] Restricted due to too high pp gain ({}pp).".format(s.pp))
+                                                log.warning("[osu!] **{}** ({}) has been restricted due to too high pp gain **({}pp)**.".format(username, userID, s.pp), "cm")
+                                        elif (s.pp >= 3500) and used_mods & 1024:
+                                                userUtils.restrict(userID)
+                                                userUtils.appendNotes(userID, "[osu!] Restricted due to too high pp gain with FLASHLIGHT ({}pp).".format(s.pp))
+						log.warning("[osu!] **{}** ({}) has been restricted due to too high pp gain with FLASHLIGHT **({}pp)**.".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
 			if bmk is None and bml is None:
