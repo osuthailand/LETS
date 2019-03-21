@@ -10,7 +10,7 @@ def toDotTicks(unixTime):
     :param unixTime: Unix timestamp
     """
     dotTicksBase = 621355968000000000
-    return (10000000*1542296830)+dotTicksBase
+    return (10000000*unixTime)+dotTicksBase
 
 def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
     if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
