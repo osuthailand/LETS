@@ -439,16 +439,34 @@ class handler(requestsManager.asyncRequestHandler):
 				# Some debug messages
 				log.debug("Generated output for online ranking screen!")
 				log.debug(output)
-
+				
+				# Top PP Function
+				# Thanks ilyt
+				# 4504cdbcc54504cdbcc5
+				newTopPP = False
+				maxPPForMode = glob.db.fetch("SELECT pp FROM scores WHERE mode = %s AND completed = 3", (s.mode))
+				if maxPPForMode["pp"] < s.pp:
+					newTopPP = True
+				
 				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted or newTopPP and s.completed = 3 and not restricted:
+					if not newTopPP:
+						annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+							userID,
+							username.encode().decode("ASCII", "ignore"),
+							beatmapInfo.beatmapID,
+							beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+							gameModes.getGamemodeFull(s.gameMode)
+						)
+					else:
+						annmsg = "[https://ripple.moe/?u={} {}] achieved the new top PP score on [https://osu.ppy.sh/b/{} {}] ({})".format(
 						userID,
 						username.encode().decode("ASCII", "ignore"),
 						beatmapInfo.beatmapID,
 						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
 						gameModes.getGamemodeFull(s.gameMode)
-					)
+						)
+						
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 
