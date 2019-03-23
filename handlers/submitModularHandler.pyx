@@ -442,9 +442,12 @@ class handler(requestsManager.asyncRequestHandler):
 				
 				# Top PP Function
 				# Thanks ilyt
-				# 4504cdbcc54504cdbcc5
+				# 4504cdbcc5
 				newTopPP = False
-				maxPPForMode = glob.db.fetch("SELECT pp FROM scores WHERE mode = %s AND completed = 3", (s.mode))
+				# Fix MySQL query errors
+				# Thanks ilyt
+				# 01857f79b4
+				maxPPForMode = glob.db.fetch("SELECT pp FROM scores INNER JOIN users on scores.userid = users.id WHERE play_mode = %s AND completed = 3 AND users.privileges & 3 > 0 ORDER BY pp DESC ", (s.mode))
 				if maxPPForMode["pp"] < s.pp:
 					newTopPP = True
 				
