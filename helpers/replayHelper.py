@@ -5,6 +5,16 @@ from constants import exceptions, dataTypes
 from helpers import binaryHelper
 from objects import glob
 
+# Thanks ilyt
+# 49d84a550e
+# https://zxq.co/Cutie/lets/
+def toDotTicks(unixTime):
+    """
+    :param unixTime: Unix timestamp
+    """
+    dotTicksBase = 621355968000000000
+    return (10000000*unixTime)+dotTicksBase
+
 def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
     if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
         raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
@@ -60,7 +70,10 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
         [scoreData["full_combo"], dataTypes.byte],
         [scoreData["mods"], dataTypes.uInt32],
         [0, dataTypes.byte],
-        [0, dataTypes.uInt64],
+        # Thanks ilyt
+        # 49d84a550e
+        # https://zxq.co/Cutie/lets/
+        [toDotTicks(int(scoreData["time"])), dataTypes.uInt64],
         [rawReplay, dataTypes.rawReplay],
         [0, dataTypes.uInt32],
         [0, dataTypes.uInt32],
