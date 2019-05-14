@@ -97,7 +97,7 @@ class handler(requestsManager.asyncRequestHandler):
 			if gameMode in (gameModes.STD, gameModes.TAIKO):
 				# Std pp
 				if accuracy is None and modsEnum == 0:
-					# Generic acc/no mod
+					# Generic acc/nomod
 					# Get cached pp values
 					cachedPP = bmap.getCachedTillerinoPP()
 					if cachedPP != [0,0,0,0]:
@@ -118,9 +118,12 @@ class handler(requestsManager.asyncRequestHandler):
 					# Specific accuracy/mods, calculate pp
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=False)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=accuracy is None)
 					bmap.starsStd = oppai.stars
-					returnPP = calculatePPFromAcc(oppai, accuracy)
+					if accuracy is not None:
+						returnPP = calculatePPFromAcc(oppai, accuracy)
+					else:
+						returnPP = oppai.pp
 			else:
 				raise exceptions.unsupportedGameModeException()
 
