@@ -118,12 +118,9 @@ class handler(requestsManager.asyncRequestHandler):
 					# Specific accuracy/mods, calculate pp
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=accuracy is None)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=False)
 					bmap.starsStd = oppai.stars
-					if accuracy is not None:
-						returnPP = calculatePPFromAcc(oppai, accuracy)
-					else:
-						returnPP = oppai.pp
+					returnPP = calculatePPFromAcc(oppai, accuracy)
 			else:
 				raise exceptions.unsupportedGameModeException()
 
