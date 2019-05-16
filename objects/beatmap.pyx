@@ -4,7 +4,7 @@ import datetime
 from common.log import logUtils as log
 from constants import rankedStatuses
 from helpers import osuapiHelper
-from objects import glob
+import objects.glob
 
 
 class beatmap:
@@ -58,7 +58,11 @@ class beatmap:
 			return
 		
 		# Make sure the beatmap is not already in db
-		bdata = glob.db.fetch("SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1", [self.fileMD5, self.beatmapID])
+		bdata = objects.glob.db.fetch(
+			"SELECT id, ranked_status_freezed, ranked FROM beatmaps "
+			"WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
+			(self.fileMD5, self.beatmapID)
+		)
 		if bdata is not None:
 			# This beatmap is already in db, remove old record
 			# Get current frozen status
@@ -66,14 +70,18 @@ class beatmap:
 			if frozen == 1:
 				self.rankedStatus = bdata["ranked"]
 			log.debug("Deleting old beatmap data ({})".format(bdata["id"]))
-			glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
+			objects.glob.db.execute("DELETE FROM beatmaps WHERE id = %s LIMIT 1", [bdata["id"]])
 		else:
 			# Unfreeze beatmap status
-			frozen = 0
+			frozen = False
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-		glob.db.execute("INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, `ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, `max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);", [
+		objects.glob.db.execute(
+			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
+			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
+			"`max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`) "
+			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
@@ -100,7 +108,7 @@ class beatmap:
 		return -- True if set, False if not set
 		"""
 		# Get data from DB
-		data = glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
+		data = objects.glob.db.fetch("SELECT * FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [md5])
 
 		# Make sure the query returned something
 		if data is None:
@@ -297,7 +305,7 @@ class beatmap:
 
 		return -- list with pp values. [0,0,0,0] if not cached.
 		"""
-		data = glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
+		data = objects.glob.db.fetch("SELECT pp_100, pp_99, pp_98, pp_95 FROM beatmaps WHERE beatmap_md5 = %s LIMIT 1", [self.fileMD5])
 		if data is None:
 			return [0,0,0,0]
 		return [data["pp_100"], data["pp_99"], data["pp_98"], data["pp_95"]]
@@ -308,7 +316,7 @@ class beatmap:
 
 		l -- list with 4 default pp values ([100,99,98,95])
 		"""
-		glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
+		objects.glob.db.execute("UPDATE beatmaps SET pp_100 = %s, pp_99 = %s, pp_98 = %s, pp_95 = %s WHERE beatmap_md5 = %s", [l[0], l[1], l[2], l[3], self.fileMD5])
 
 	@property
 	def is_rankable(self):
@@ -343,6 +351,9 @@ def incrementPlaycount(md5, passed):
 	md5 -- beatmap md5
 	passed -- if True, increment passcount too
 	"""
-	glob.db.execute("UPDATE beatmaps SET playcount = playcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
-	if passed:
-		glob.db.execute("UPDATE beatmaps SET passcount = passcount+1 WHERE beatmap_md5 = %s LIMIT 1", [md5])
+	objects.glob.db.execute(
+		f"UPDATE beatmaps "
+		f"SET playcount = playcount+1{', passcount = passcount+1' if passed else ''} "
+		f"WHERE beatmap_md5 = %s LIMIT 1",
+		[md5]
+	)

@@ -381,9 +381,9 @@ class handler(requestsManager.asyncRequestHandler):
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
 			if UsingRelax:	
-				userUtils.updateStatsRx(userID, s)
+				userUtils.updateStatsRx(userID, s, beatmapInfo)
 			else:
-				userUtils.updateStats(userID, s)
+				userUtils.updateStats(userID, s, beatmapInfo)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
