@@ -58,7 +58,7 @@ class handler(requestsManager.asyncRequestHandler):
 				requestsManager.printArguments(self)
 
 			# Check arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
+			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -68,6 +68,12 @@ class handler(requestsManager.asyncRequestHandler):
 			iv = self.get_argument("iv")
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
+			quit_ = self.get_argument("x") == "1"
+			try:
+				failTime = max(0, int(self.get_argument("ft", 0)))
+			except ValueError:
+				raise exceptions.invalidArgumentsException(MODULE_NAME)
+			failed = not quit_ and failTime > 0
 
 			# Get bmk and bml (notepad hack check)
 			if "bmk" in self.request.arguments and "bml" in self.request.arguments:
@@ -134,11 +140,12 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
+			
 			if UsingRelax:
 				s = scoreRelax.score()
 			else:
 				s = score.score()
-			s.setDataFromScoreData(scoreData)
+			s.setDataFromScoreData(scoreData, quit_=quit_, failed=failed)
 			s.playerUserID = userID
 
 			if s.completed == -1:
@@ -162,6 +169,11 @@ class handler(requestsManager.asyncRequestHandler):
 			if beatmapInfo.rankedStatus not in glob.conf.extra["_allowed_beatmap_rank"]:
 				log.debug("Beatmap's rankstatus is not allowed to be submitted. Score submission aborted.")
 				return
+
+			# Set play time and full play time
+			s.fullPlayTime = beatmapInfo.hitLength
+			if quit_ or failed:
+				s.playTime = failTime // 1000
 
 			# Calculate PP
 			length = 0
@@ -380,10 +392,10 @@ class handler(requestsManager.asyncRequestHandler):
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			if UsingRelax:	
-				userUtils.updateStatsRx(userID, s, beatmapInfo)
+			if UsingRelax:
+				userUtils.updateStatsRx(userID, s)
 			else:
-				userUtils.updateStats(userID, s, beatmapInfo)
+				userUtils.updateStats(userID, s)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
