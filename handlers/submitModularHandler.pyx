@@ -425,6 +425,9 @@ class handler(requestsManager.asyncRequestHandler):
 			else:
 				userUtils.updateStats(userID, s)
 
+			# Update personal beatmaps playcount
+			userUtils.incrementUserBeatmapPlaycount(userID, s.gameMode, beatmapInfo.beatmapID)
+
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
 			# (only if we passed that song)
