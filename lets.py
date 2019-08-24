@@ -45,7 +45,11 @@ from handlers import osuSearchSetHandler
 from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
+<<<<<<< HEAD
 from handlers import commentHandler
+=======
+from handlers import lastFMHandler
+>>>>>>> 19641ae... client ac checker
 from helpers import config
 from helpers import consoleHelper
 from common import generalUtils
@@ -91,11 +95,17 @@ def make_app():
 		(r"/letsapi/v1/status", apiStatusHandler.handler),
 		(r"/letsapi/v1/pp", apiPPHandler.handler),
 		(r"/letsapi/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
-
+		(r"/web/lastfm.php", lastFMHandler.handler),
+		
 		# Not done yet
+<<<<<<< HEAD
 		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
 		(r"/web/osu-addfavourite.php", osuErrorHandler.handler), # I use the error handler as I want an empty response for the time being
 		(r"/web/lastfm.php", emptyHandler.handler),
+=======
+		(r"/web/osu-rate.php", emptyHandler.handler),
+		(r"/web/osu-comment.php", emptyHandler.handler),
+>>>>>>> 19641ae... client ac checker
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
 
 		(r"/loadTest", loadTestHandler.handler),
