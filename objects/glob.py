@@ -19,7 +19,6 @@ application = None
 pool = None
 pascoa = {}
 
-busyThreads = 0
 debug = False
 sentry = False
 
