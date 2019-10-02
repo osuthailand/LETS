@@ -165,7 +165,7 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
-			if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and restricted == False:
+			if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not restricted:
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
@@ -175,7 +175,7 @@ class handler(requestsManager.asyncRequestHandler):
 				# No bmk and bml params passed, edited or super old client
 				#log.warning("{} ({}) most likely submitted a score from an edited client or a super old client".format(username, userID), "cm")
 				pass
-			elif bmk != bml and restricted == False:
+			elif bmk != bml and not restricted:
 				# bmk and bml passed and they are different, restrict the user
 				userUtils.restrict(userID)
 				userUtils.appendNotes(userID, "Restricted due to notepad hack")
@@ -206,11 +206,11 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			# Client anti-cheat flags
 			'''ignoreFlags = 4
-			if glob.debug == True:
+			if glob.debug:
 				# ignore multiple client flags if we are in debug mode
 				ignoreFlags |= 8
 			haxFlags = (len(scoreData[17])-len(scoreData[17].strip())) & ~ignoreFlags
-			if haxFlags != 0 and restricted == False:
+			if haxFlags != 0 and not restricted:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
@@ -442,7 +442,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 
 				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1 and s.completed == 3 and restricted == False:
+				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
 					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
 						userID,
 						username.encode().decode("ASCII", "ignore"),
