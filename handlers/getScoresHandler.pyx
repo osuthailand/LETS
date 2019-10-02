@@ -33,7 +33,10 @@ class handler(requestsManager.asyncRequestHandler):
 			# TODO: Maintenance check
 
 			# Check required arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["c", "f", "i", "m", "us", "v", "vv", "mods"]):
+			if not requestsManager.checkArguments(
+					self.request.arguments,
+					["c", "f", "i", "m", "us", "v", "vv", "mods"]
+			):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# GET parameters
@@ -91,7 +94,9 @@ class handler(requestsManager.asyncRequestHandler):
 			bmap = beatmap.beatmap(md5, beatmapSetID, gameMode)
 
 			# Create leaderboard object, link it to bmap and get all scores
-			sboard = scoreboard.scoreboard(username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends)
+			sboard = scoreboard.scoreboard(
+					username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
+			)
 
 			# Data to return
 			data = ""
@@ -101,7 +106,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Send bancho notification if needed
 			if modsFilter > -1:
-				knowsPPLeaderboard = False if glob.redis.get("lets:knows_pp_leaderboard:{}".format(userID)) is None else True
+				knowsPPLeaderboard = glob.redis.get("lets:knows_pp_leaderboard:{}".format(userID)) is not None
 				if modsFilter & mods.AUTOPLAY > 0 and not knowsPPLeaderboard:
 					glob.redis.set("lets:knows_pp_leaderboard:{}".format(userID), "1", 1800)
 					glob.redis.publish("peppy:notification", json.dumps({
