@@ -28,14 +28,49 @@ class scoreboard:
 		if setScores:
 			self.setScores()
 
+	@staticmethod
+	def buildQuery(params):
+		return "{select} {joins} {country} {mods} {friends} {order} {limit}".format(**params)
+		
+	def getPersonalBest(self):
+		if self.userID == 0:
+			return None
+			
+		# Query parts
+		cdef str select = ""
+		cdef str joins = ""
+		cdef str country = ""
+		cdef str mods = ""
+		cdef str friends = ""
+		cdef str order = ""
+		cdef str limit = ""
+		select = "SELECT id FROM scores WHERE userid = %(userid)s AND beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3"
 
+		# Mods
+		if self.mods > -1:
+			mods = "AND mods = %(mods)s"
+
+		# Friends ranking
+		if self.friends:
+			friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
+
+		# Sort and limit at the end
+		order = "ORDER BY score DESC"
+		limit = "LIMIT 1"
+
+		# Build query, get params and run query
+		query = self.buildQuery(locals())
+		params = {"userid": self.userID, "md5": self.beatmap.fileMD5, "mode": self.gameMode, "mods": self.mods}
+		id_ = glob.db.fetch(query, params)
+		if id_ is None:
+			return None
+		return id_["id"]
+			
 	def setScores(self):
 		"""
 		Set scores list
 		"""
-
-		def buildQuery(params):
-			return "{select} {joins} {country} {mods} {friends} {order} {limit}".format(**params)
+		
 		# Reset score list
 		self.scores = []
 		self.scores.append(-1)
@@ -54,32 +89,11 @@ class scoreboard:
 		cdef str limit = ""
 
 		# Find personal best score
-		if self.userID != 0:
-			# Query parts
-			select = "SELECT id FROM scores WHERE userid = %(userid)s AND beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3"
-
-			# Mods
-			if self.mods > -1:
-				mods = "AND mods = %(mods)s"
-
-			# Friends ranking
-			if self.friends:
-				friends = "AND (scores.userid IN (SELECT user2 FROM users_relationships WHERE user1 = %(userid)s) OR scores.userid = %(userid)s)"
-
-			# Sort and limit at the end
-			order = "ORDER BY score DESC"
-			limit = "LIMIT 1"
-
-			# Build query, get params and run query
-			query = buildQuery(locals())
-			params = {"userid": self.userID, "md5": self.beatmap.fileMD5, "mode": self.gameMode, "mods": self.mods}
-			personalBestScore = glob.db.fetch(query, params)
-		else:
-			personalBestScore = None
+		personalBestScore = self.getPersonalBest()
 
 		# Output our personal best if found
 		if personalBestScore is not None:
-			s = score.score(personalBestScore["id"])
+			s = score.score(personalBestScore)
 			self.scores[0] = s
 		else:
 			# No personal best
@@ -117,7 +131,7 @@ class scoreboard:
 		limit = "LIMIT 50"
 
 		# Build query, get params and run query
-		query = buildQuery(locals())
+		query = self.buildQuery(locals())
 		params = {"beatmap_md5": self.beatmap.fileMD5, "play_mode": self.gameMode, "userid": self.userID, "mods": self.mods}
 		topScores = glob.db.fetchAll(query, params)
 
@@ -131,7 +145,7 @@ class scoreboard:
 
 				# Set data and rank from topScores's row
 				s.setDataFromDict(topScore)
-				s.setRank(c)
+				s.rank = c
 
 				# Check if this top 50 score is our personal best
 				if s.playerName == self.username:
@@ -148,7 +162,7 @@ class scoreboard:
 			limit = "LIMIT 1"
 
 			# Build query, get params and run query
-			query = buildQuery(locals())
+			query = self.buildQuery(locals())
 			count = glob.db.fetch(query, params)
 			if count == None:
 				self.totalScores = 0
