@@ -63,7 +63,7 @@ class handler(requestsManager.asyncRequestHandler):
 				except ValueError:
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 			else:
-				accuracy = -1.0
+				accuracy = None
 
 			# Print message
 			log.info("Requested pp for beatmap {}".format(beatmapID))
@@ -94,10 +94,10 @@ class handler(requestsManager.asyncRequestHandler):
 					gameMode = gameModes.MANIA
 
 			# Calculate pp
-			if gameMode == in (gameModes.STD, gameModes.TAIKO):
+			if gameMode in (gameModes.STD, gameModes.TAIKO):
 				# Std pp
-				if accuracy < 0 and modsEnum == 0:
-					# Generic acc
+				if accuracy is None and modsEnum == 0:
+					# Generic acc/no mod
 					# Get cached pp values
 					cachedPP = bmap.getCachedTillerinoPP()
 					if cachedPP != [0,0,0,0]:
@@ -112,16 +112,16 @@ class handler(requestsManager.asyncRequestHandler):
 
 						# Cache values in DB
 						log.debug("Saving cached pp...")
-						if type(returnPP) == list and len(returnPP) == 4:
+						if type(returnPP) is list and len(returnPP) == 4:
 							bmap.saveCachedTillerinoPP(returnPP)
 				else:
-					# Specific accuracy, calculate
+					# Specific accuracy/mods, calculate pp
 					# Create oppai instance
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
-					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+					oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=accuracy is None)
 					bmap.starsStd = oppai.stars
-					if accuracy > 0:
-						returnPP.append(calculatePPFromAcc(oppai, accuracy))
+					if accuracy is not None:
+						returnPP = calculatePPFromAcc(oppai, accuracy)
 					else:
 						returnPP = oppai.pp
 			else:
@@ -130,7 +130,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Data to return
 			data = {
 				"song_name": bmap.songName,
-				"pp": [round(x, 2) for x in returnPP] if type(returnPP) == list else returnPP,
+				"pp": [x for x in returnPP] if type(returnPP) is list else returnPP,
 				"length": bmap.hitLength,
 				"stars": bmap.starsStd,
 				"ar": bmap.AR,
