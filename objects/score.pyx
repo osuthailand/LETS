@@ -22,7 +22,7 @@ class score:
 	}
 	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
 	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
-	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease"]
+	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease", "personalOldBestScore"]
 	def __init__(self, scoreID = None, rank = None, setData = True):
 		"""
 		Initialize a (empty) score object.
@@ -60,6 +60,7 @@ class score:
 
 		self.oldPersonalBest = 0
 		self.rankedScoreIncrease = 0
+		self.personalOldBestScore = None
 
 		if scoreID is not None and setData:
 			self.setDataFromDB(scoreID, rank)
@@ -108,7 +109,7 @@ class score:
 		rank -- new score rank
 		"""
 		self.rank = rank
-
+			
 	def setDataFromDB(self, scoreID, rank = None):
 		"""
 		Set this object's score data from db
@@ -187,7 +188,7 @@ class score:
 			self.setCompletedStatus()
 
 
-	def getData(self, pp=False):
+	def getData(self, pp=True):
 		"""Return score row relative to this score for getscores"""
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
 			self.scoreID,
@@ -234,7 +235,10 @@ class score:
 				self.completed = 3
 				self.rankedScoreIncrease = self.score
 				self.oldPersonalBest = 0
+				self.personalOldBestScore = None
 			else:
+				self.personalOldBestScore = personalBest["id"]
+				self.calculatePP()
 				# Compare personal best's score with current score
 				if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
 					# New best score
@@ -245,7 +249,7 @@ class score:
 					self.completed = 2
 					self.rankedScoreIncrease = 0
 					self.oldPersonalBest = 0
-
+				
 		log.debug("Completed status: {}".format(self.completed))
 
 	def saveScoreInDB(self):
@@ -258,8 +262,8 @@ class score:
 			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy * 100, self.pp]))
 
 			# Set old personal best to completed = 2
-			if self.oldPersonalBest != 0:
-				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = %s", [self.oldPersonalBest])
+			if self.oldPersonalBest != 0 and self.completed == 3:
+				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = %s LIMIT 1", [self.oldPersonalBest])
 
 	def calculatePP(self, b = None):
 		"""
