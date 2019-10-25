@@ -22,7 +22,7 @@ from common.ddog import datadogClient
 from common.log import logUtils as log
 from common.redis import pubSub
 from common.web import schiavo
-from handlers import apiCacheBeatmapHandler, rateHandler
+from handlers import apiCacheBeatmapHandler, rateHandler, changelogHandler
 from handlers import apiPPHandler
 from handlers import apiStatusHandler
 from handlers import banchoConnectHandler
@@ -31,6 +31,7 @@ from handlers import defaultHandler
 from handlers import downloadMapHandler
 from handlers import emptyHandler
 from handlers import getFullReplayHandler
+from handlers import getFullReplayHandlerRelax
 from handlers import getReplayHandler
 from handlers import getScoresHandler
 from handlers import getScreenshotHandler
@@ -66,16 +67,20 @@ def make_app():
 		(r"/web/check-updates.php", checkUpdatesHandler.handler),
 		(r"/web/osu-error.php", osuErrorHandler.handler),
 		(r"/web/osu-comment.php", commentHandler.handler),
+		(r"/p/changelog", changelogHandler.handler),
+		(r"/web/changelog.php", changelogHandler.handler),
+		(r"/home/changelog", changelogHandler.handler),
 		(r"/web/osu-rate.php", rateHandler.handler),
 		(r"/ss/(.*)", getScreenshotHandler.handler),
 		(r"/web/maps/(.*)", mapsHandler.handler),
 		(r"/d/(.*)", downloadMapHandler.handler),
 		(r"/s/(.*)", downloadMapHandler.handler),
 		(r"/web/replays/(.*)", getFullReplayHandler.handler),
+		(r"/web/replays_relax/(.*)", getFullReplayHandlerRelax.handler),
 		(r"/web/errorlogs/(.*)", getFullErrorHandler.handler),
 
-		(r"/p/verify", redirectHandler.handler, dict(destination="https://ripple.moe/index.php?p=2")),
-		(r"/u/(.*)", redirectHandler.handler, dict(destination="https://ripple.moe/index.php?u={}")),
+		(r"/p/verify", redirectHandler.handler, dict(destination="https://bigtu.vip/")),
+		(r"/u/(.*)", redirectHandler.handler, dict(destination="https://bigtu.vip/u/{}")),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
@@ -140,14 +145,14 @@ if __name__ == "__main__":
 		except:
 			consoleHelper.printWarning()
 			consoleHelper.printColored("[!] Unable to load custom config at {}".format(glob.conf.config["custom"]["config"]), bcolors.RED)
-			consoleHelper.printColored("[!] Make sure you have the latest osufx common submodule!", bcolors.RED)
+			consoleHelper.printColored("[!] Make sure you have the latest osu!thailand common submodule!", bcolors.RED)
 			sys.exit()
 
 		# Check if running common module is usable
 		if glob.COMMON_VERSION == "Unknown":
 			consoleHelper.printWarning()
-			consoleHelper.printColored("[!] You do not seem to be using osufx's common submodule... nothing will work...", bcolors.RED)
-			consoleHelper.printColored("[!] You can download or fork the submodule from {}https://github.com/osufx/ripple-python-common".format(bcolors.UNDERLINE), bcolors.RED)
+			consoleHelper.printColored("[!] You do not seem to be using osu!thailand's common submodule... nothing will work...", bcolors.RED)
+			consoleHelper.printColored("[!] You can download or fork the submodule from {}https://github.com/osuthailand/ripple-python-common".format(bcolors.UNDERLINE), bcolors.RED)
 			sys.exit()
 		elif LooseVersion(glob.COMMON_VERSION_REQ) > LooseVersion(glob.COMMON_VERSION):
 			consoleHelper.printColored("[!] Your common submodule version is below the required version number for this version of lets.", bcolors.RED)
@@ -158,6 +163,7 @@ if __name__ == "__main__":
 		paths = [
 			".data",
 			".data/replays",
+			".data/replays_relax",
 			".data/screenshots",
 			".data/oppai",
 			".data/catch_the_pp",
