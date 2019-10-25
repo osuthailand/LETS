@@ -216,7 +216,7 @@ class handler(requestsManager.asyncRequestHandler):
 					if oldPersonalBestRank == 0:
 						# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
 						oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
-						oldScoreboard.setPersonalBestRank()
+						oldScoreboard.setPersonalBest()
 						oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
 						oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank)
 					else:
@@ -434,7 +434,7 @@ class handler(requestsManager.asyncRequestHandler):
 				# Get personal best after submitting the score
 				if UsingRelax:
 					newScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
-					newScoreboard.setPersonalBestRank()
+					newScoreboard.setPersonalBest()
 					personalBestID = newScoreboard.getPersonalBestID()
 					assert personalBestID is not None
 					currentPersonalBest = scoreRelax.score(personalBestID, newScoreboard.personalBestRank)
