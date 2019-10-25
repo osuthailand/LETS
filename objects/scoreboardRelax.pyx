@@ -93,7 +93,7 @@ class scoreboardRelax:
 
 		# Output our personal best if found
 		if personalBestScore is not None:
-			s = score.score(personalBestScore)
+			s = scoreRelax.score(personalBestScore)
 			self.scores[0] = s
 		else:
 			# No personal best
