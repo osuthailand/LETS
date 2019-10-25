@@ -1,4 +1,5 @@
 import time
+import datetime
 
 from common.log import logUtils as log
 from constants import rankedStatuses
@@ -9,7 +10,7 @@ from objects import glob
 class beatmap:
 	__slots__ = ["songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
 	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "maxCombo", "hitLength",
-	             "bpm", "playcount" ,"passcount", "refresh"]
+	             "bpm", "rankingDate", "playcount" ,"passcount", "refresh"]
 
 	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False):
 		"""
@@ -37,6 +38,8 @@ class beatmap:
 		self.hitLength = 0
 		self.bpm = 0
 
+		self.rankingDate = 0
+		
 		# Statistics for ranking panel
 		self.playcount = 0
 
@@ -50,6 +53,10 @@ class beatmap:
 		"""
 		Add current beatmap data in db if not in yet
 		"""
+		if self.fileMD5 is None:
+			self.rankedStatus = rankedStatuses.NOT_SUBMITTED
+			return
+		
 		# Make sure the beatmap is not already in db
 		bdata = glob.db.fetch("SELECT id, ranked_status_freezed, ranked FROM beatmaps WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1", [self.fileMD5, self.beatmapID])
 		if bdata is not None:
@@ -203,6 +210,7 @@ class beatmap:
 		self.songName = "{} - {} [{}]".format(mainData["artist"], mainData["title"], mainData["version"])
 		self.fileMD5 = md5
 		self.rankedStatus = convertRankedStatus(int(mainData["approved"]))
+		self.rankingDate = int(time.mktime(datetime.datetime.strptime(mainData["last_update"], "%Y-%m-%d %H:%M:%S").timetuple()))
 		self.beatmapID = int(mainData["beatmap_id"])
 		self.beatmapSetID = int(mainData["beatmapset_id"])
 		self.AR = float(mainData["diff_approach"])
