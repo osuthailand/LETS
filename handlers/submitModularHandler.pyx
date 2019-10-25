@@ -32,7 +32,6 @@ from objects import score
 from objects import scoreboard
 from objects import scoreRelax
 from objects import scoreboardRelax
-from objects import scoreboardRelaxScore
 from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
 
@@ -216,7 +215,7 @@ class handler(requestsManager.asyncRequestHandler):
 					oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
 					if oldPersonalBestRank == 0:
 						# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-						oldScoreboard = scoreboardRelaxScore.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
+						oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
 						oldScoreboard.setPersonalBestRank()
 						oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
 						oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank)
