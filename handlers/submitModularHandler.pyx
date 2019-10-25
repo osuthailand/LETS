@@ -5,6 +5,7 @@ import sys
 import threading
 import traceback
 from urllib.parse import urlencode
+import math
 
 import requests
 import tornado.gen
@@ -23,11 +24,15 @@ from constants.exceptions import ppCalcException
 from helpers import aeshelper
 from helpers import replayHelper
 from helpers import leaderboardHelper
+from helpers import leaderboardHelperRelax
 from helpers.generalHelper import zingonify
 from objects import beatmap
 from objects import glob
 from objects import score
 from objects import scoreboard
+from objects import scoreRelax
+from objects import scoreboardRelax
+from objects import scoreboardRelaxScore
 from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
 
@@ -123,10 +128,18 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
 
+			# Get variables for relax
+			used_mods = int(scoreData[13])
+			UsingRelax = used_mods & 128
+
 			# Create score object and set its data
 			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
-			s = score.score()
+			if UsingRelax:
+				s = scoreRelax.score()
+			else:
+				s = score.score()
 			s.setDataFromScoreData(scoreData)
+			s.playerUserID = userID
 
 			if s.completed == -1:
 				# Duplicated score
@@ -151,6 +164,15 @@ class handler(requestsManager.asyncRequestHandler):
 				return
 
 			# Calculate PP
+			length = 0
+			if s.passed:
+				length = userUtils.getBeatmapTime(beatmapInfo.beatmapID)
+			else:
+				length = math.ceil(int(self.get_argument("ft")) / 1000)
+			if UsingRelax: 	
+				userUtils.incrementPlaytimeRX(userID, s.gameMode, length)
+			else:
+				userUtils.incrementPlaytime(userID, s.gameMode, length)
 			midPPCalcException = None
 			try:
 				s.calculatePP()
@@ -165,10 +187,16 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
-			if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not restricted:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+			if UsingRelax: 
+				if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not restricted:
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+			else:
+				if (s.pp >= 800 and s.gameMode == gameModes.STD) and not restricted:
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
 			if bmk is None and bml is None:
@@ -184,21 +212,30 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			# Right before submitting the score, get the personal best score object (we need it for charts)
 			if s.passed and s.oldPersonalBest > 0:
-				# We have an older personal best. Get its rank (try to get it from cache first)
-				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
-				if oldPersonalBestRank == 0:
-					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-					oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-					oldScoreboard.setPersonalBest()
-					oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
-				oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
+				if UsingRelax:
+					oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+					if oldPersonalBestRank == 0:
+						# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
+						oldScoreboard = scoreboardRelaxScore.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
+						oldScoreboard.setPersonalBestRank()
+						oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
+						oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank)
+					else:
+					# We have an older personal best. Get its rank (try to get it from cache first)
+						oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+						if oldPersonalBestRank == 0:
+						# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
+							oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+							oldScoreboard.setPersonalBest()
+							oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
+							oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
 			else:
 				oldPersonalBestRank = 0
 				oldPersonalBest = None
 			
 			# Save score in db
 			s.saveScoreInDB()
-			
+				
 			# Remove lock as we have the score in the database at this point
 			# and we can perform duplicates check through MySQL
 			log.debug("Resetting score lock key {}".format(lock_key))
@@ -215,33 +252,7 @@ class handler(requestsManager.asyncRequestHandler):
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
-			# Mi stavo preparando per scendere
-			# Mi stavo preparando per comprare i dolci
-			# Oggi e' il compleanno di mio nipote
-			# Dovevamo festeggiare staseraaaa
-			# ----
-			# Da un momento all'altro ho sentito una signora
-			# Correte, correte se ne e' sceso un muro
-			# Da un momento all'altro ho sentito una signora
-			# Correte, correte se ne e' sceso un muro
-			# --- (io sto angora in ganottier ecche qua) ---
-			# Sono scesa e ho visto ilpalazzochesenee'caduto
-			# Ho preso a mio cognato, che stava svenuto
-			# Mia figlia e' scesa, mia figlia ha urlato
-			# "C'e' qualcuno sotto, C'e' qualcuno sotto"
-			# "C'e' qualcuno sotto, C'e' qualcuno sottoooooooooo"
-			# --- (scusatm che sto angor emozzionat non parlo ancora moltobbene) ---
-			# Da un momento all'altro ho sentito una signora
-			# Correte, correte se ne e' sceso un muro
-			# Da un momento all'altro ho sentito una signora
-			# Correte, correte se ne e' sceso un muro
-			# -- THIS IS THE PART WITH THE GOOD SOLO (cit <3) --
-			# Vedete quel palazzo la' vicino
-			# Se ne sta scendendo un po' alla volta
-			# Piano piano, devono prendere provvedimenti
-			# Al centro qua hanno fatto una bella ristrututuitriazione
-			# Hanno mess le panghina le fondane iffiori
-			# LALALALALALALALALA
+			# สวัสดีฮะ ผมเต้เอ็กเซนไฟไหม้
 			if s.score < 0 or s.score > (2 ** 63) - 1:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Banned due to negative score (score submitter)")
@@ -262,10 +273,48 @@ class handler(requestsManager.asyncRequestHandler):
 			if s.completed == 3 and "pl" in self.request.arguments:
 				butterCake.bake(self, s)
 
+			if UsingRelax:
+				score_id_relax = s.scoreID 
+				
 			# Save replay for all passed scores
 			# Make sure the score has an id as well (duplicated?, query error?)
 			if s.passed and s.scoreID > 0:
-				if "score" in self.request.files:
+				if UsingRelax:
+					# Save the replay if it was provided
+					log.debug("Saving replay ({})...".format(score_id_relax))
+					replay = self.request.files["score"][0]["body"]
+					with open(".data/replays_relax/replay_{}.osr".format(score_id_relax), "wb") as f:
+						f.write(replay)
+					
+					# Send to cono ALL passed replays, even non high-scores
+					if glob.conf.config["cono"]["enable"]:
+						# We run this in a separate thread to avoid slowing down scores submission,
+						# as cono needs a full replay
+						threading.Thread(target=lambda: glob.redis.publish(
+							"cono:analyze", json.dumps({
+								"score_id": s.scoreID,
+								"beatmap_id": beatmapInfo.beatmapID,
+								"user_id": s.playerUserID,
+								"game_mode": s.gameMode,
+								"pp": s.pp,
+								"replay_data": base64.b64encode(
+									replayHelper.buildFullReplay(
+										s.scoreID,
+										rawReplay=self.request.files["score"][0]["body"]
+									)
+								).decode(),
+							})
+						)).start()
+					else:
+						# Restrict if no replay was provided
+						if not restricted:
+							userUtils.restrict(userID)
+							userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
+													  "(most likely he used a score submitter)")
+							log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+								username, userID, s.fileMd5
+							), "cm")
+				else:
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
@@ -291,15 +340,15 @@ class handler(requestsManager.asyncRequestHandler):
 								).decode(),
 							})
 						)).start()
-				else:
-					# Restrict if no replay was provided
-					if not restricted:
-						userUtils.restrict(userID)
-						userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
+					else:
+						# Restrict if no replay was provided
+						if not restricted:
+							userUtils.restrict(userID)
+							userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
 													  "(most likely he used a score submitter)")
-						log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
-							username, userID, s.fileMd5
-						), "cm")
+							log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+								username, userID, s.fileMd5
+							), "cm")
 
 			# Update beatmap playcount (and passcount)
 			beatmap.incrementPlaycount(s.fileMd5, s.passed)
@@ -331,15 +380,26 @@ class handler(requestsManager.asyncRequestHandler):
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
-			userUtils.updateStats(userID, s)
+			if UsingRelax:	
+				userUtils.updateStatsRx(userID, s)
+			else:
+				userUtils.updateStats(userID, s)
 
 			# Get "after" stats for ranking panel
 			# and to determine if we should update the leaderboard
 			# (only if we passed that song)
 			if s.passed:
 				# Get new stats
-				newUserData = userUtils.getUserStats(userID, s.gameMode)
-				glob.userStatsCache.update(userID, s.gameMode, newUserData)
+				if UsingRelax:
+					newUserData = userUtils.getUserStatsRx(userID, s.gameMode)
+					glob.userStatsCache.update(userID, s.gameMode, newUserData)
+					leaderboardHelperRelax.update(userID, newUserData["pp"], s.gameMode)
+					maxCombo = 0
+				else:
+					newUserData = userUtils.getUserStats(userID, s.gameMode)
+					glob.userStatsCache.update(userID, s.gameMode, newUserData)
+					leaderboardHelper.update(userID, newUserData["pp"], s.gameMode)
+					maxCombo = userUtils.getMaxCombo(userID, s.gameMode)
 
 				# Update leaderboard (global and country) if score/pp has changed
 				if s.completed == 3 and newUserData["pp"] != oldUserData["pp"]:
@@ -358,7 +418,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Score has been submitted, do not retry sending the score if
 			# there are exceptions while building the ranking panel
-			keepSending = False
+			keepSending = True
 
 			# At the end, check achievements
 			if s.passed:
@@ -373,14 +433,24 @@ class handler(requestsManager.asyncRequestHandler):
 				glob.redis.publish("peppy:update_cached_stats", userID)
 
 				# Get personal best after submitting the score
-				newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-				newScoreboard.setPersonalBest()
-				personalBestID = newScoreboard.getPersonalBest()
-				assert personalBestID is not None
-				currentPersonalBest = score.score(personalBestID, newScoreboard.personalBestRank)
+				if UsingRelax:
+					newScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
+					newScoreboard.setPersonalBestRank()
+					personalBestID = newScoreboard.getPersonalBestID()
+					assert personalBestID is not None
+					currentPersonalBest = scoreRelax.score(personalBestID, newScoreboard.personalBestRank)
+				else:
+					newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+					newScoreboard.setPersonalBest()
+					personalBestID = newScoreboard.getPersonalBest()
+					assert personalBestID is not None
+					currentPersonalBest = score.score(personalBestID, newScoreboard.personalBestRank)
 
 				# Get rank info (current rank, pp/score to next rank, user who is 1 rank above us)
-				rankInfo = leaderboardHelper.getRankInfo(userID, s.gameMode)
+				if bool(s.mods & 128):
+					rankInfo = leaderboardHelperRelax.getRankInfo(userID, s.gameMode)
+				else:
+					rankInfo = leaderboardHelper.getRankInfo(userID, s.gameMode)
 
 				# Output dictionary
 				if newCharts:
@@ -391,7 +461,7 @@ class handler(requestsManager.asyncRequestHandler):
 							("beatmapSetId", beatmapInfo.beatmapSetID),
 							("beatmapPlaycount", beatmapInfo.playcount + 1),
 							("beatmapPasscount", beatmapInfo.passcount + (s.completed == 3)),
-							("approvedDate", "")
+							("approvedDate", beatmapInfo.rankingDate)
 						]),
 						BeatmapChart(
 							oldPersonalBest if s.completed == 3 else currentPersonalBest,
@@ -410,7 +480,7 @@ class handler(requestsManager.asyncRequestHandler):
 							("beatmapSetId", beatmapInfo.beatmapSetID),
 							("beatmapPlaycount", beatmapInfo.playcount),
 							("beatmapPasscount", beatmapInfo.passcount),
-							("approvedDate", "")
+							("approvedDate", beatmapInfo.rankingDate)
 						]),
 						collections.OrderedDict([
 							("chartId", "overall"),
@@ -442,17 +512,35 @@ class handler(requestsManager.asyncRequestHandler):
 
 
 				# send message to #announce if we're rank #1
-				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[https://ripple.moe/?u={} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-						userID,
-						username.encode().decode("ASCII", "ignore"),
-						beatmapInfo.beatmapID,
-						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-						gameModes.getGamemodeFull(s.gameMode)
-					)
+				if UsingRelax:
+					if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
+						annmsg = "[RELAX] [https://bigtu.vip/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+									userID,
+									username.encode().decode("ASCII", "ignore"),
+									beatmapInfo.beatmapID,
+									beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+									gameModes.getGamemodeFull(s.gameMode)
+								)
+				else:
+					if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
+						annmsg = "[VANILLA] [https://bigtu.vip/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+							userID,
+							username.encode().decode("ASCII", "ignore"),
+							beatmapInfo.beatmapID,
+							beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+							gameModes.getGamemodeFull(s.gameMode)
+								)
+								
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 
+				if UsingRelax:
+					server = "Relax"
+				else:
+					server = "Vanilla"
+					
+				ppGained = newUserData["pp"] - oldUserData["pp"]
+				gainedRanks = oldRank - rankInfo["currentRank"]
 				# Write message to client
 				self.write(output)
 			else:

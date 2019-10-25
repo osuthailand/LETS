@@ -74,7 +74,7 @@ class handler(requestsManager.asyncRequestHandler):
 			country = False
 			friends = False
 			modsFilter = -1
-			mods = int(self.get_argument("mods")
+			mods = int(self.get_argument("mods"))
 
 			if scoreboardType == 4:
 				# Country leaderboard
