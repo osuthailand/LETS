@@ -23,6 +23,7 @@ from constants import rankedStatuses
 from constants.exceptions import ppCalcException
 from helpers import aeshelper
 from helpers import replayHelper
+from helpers import replayHelperRelax
 from helpers import leaderboardHelper
 from helpers import leaderboardHelperRelax
 from helpers.generalHelper import zingonify
@@ -297,7 +298,7 @@ class handler(requestsManager.asyncRequestHandler):
 								"game_mode": s.gameMode,
 								"pp": s.pp,
 								"replay_data": base64.b64encode(
-									replayHelper.buildFullReplay(
+									replayHelperRelax.buildFullReplay(
 										s.scoreID,
 										rawReplay=self.request.files["score"][0]["body"]
 									)
