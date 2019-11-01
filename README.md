@@ -1,3 +1,4 @@
+# ⚠️ As of 1st November 2019, this repository has been deprecated and is not used in Ainu's stack anymore. It's left here just for historical reasons.
 ## LETS
 
 - Origin: https://zxq.co/ripple/lets
