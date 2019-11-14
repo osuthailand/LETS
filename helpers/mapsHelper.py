@@ -4,6 +4,7 @@ from common import generalUtils
 from common.log import logUtils as log
 from constants import exceptions
 from helpers import osuapiHelper
+from objects import glob
 
 def isBeatmap(fileName=None, content=None):
     if fileName is not None:
