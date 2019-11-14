@@ -48,9 +48,9 @@ class handler(requestsManager.asyncRequestHandler):
 			replayData = glob.db.fetch("SELECT scores.*, users.username AS uname FROM scores LEFT JOIN users ON scores.userid = users.id WHERE scores.id = %s", [replayID])
 			if replayData == None:
 				replayData = glob.db.fetch("SELECT scores_relax.*, users.username AS uname FROM scores_relax LEFT JOIN users ON scores_relax.userid = users.id WHERE scores_relax.id = %s", [replayID])
-				fileName = ".data/replays_relax/replay_{}.osr".format(replayID)
+				fileName = "{}_relax/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], replayID)
 			else:
-				fileName = ".data/replays/replay_{}.osr".format(replayID)
+				fileName = "{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], replayID)
 
 			# Increment 'replays watched by others' if needed
 			if replayData is not None:

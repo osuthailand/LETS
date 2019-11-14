@@ -53,4 +53,4 @@ def cacheMap(mapFile, _beatmap):
         log.debug("maps ~> Beatmap found in cache!")
 
 def cachedMapPath(beatmap_id):
-    return ".data/beatmaps/{}.osu".format(beatmap_id)
+    return "{}/{}.osu".format(glob.conf.config["server"]["beatmapspath"], beatmap_id)
