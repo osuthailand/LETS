@@ -152,7 +152,7 @@ if __name__ == "__main__":
 		if glob.COMMON_VERSION == "Unknown":
 			consoleHelper.printWarning()
 			consoleHelper.printColored("[!] You do not seem to be using osu!thailand's common submodule... nothing will work...", bcolors.RED)
-			consoleHelper.printColored("[!] You can download or fork the submodule from {}https://github.com/osuthailand/ripple-python-common".format(bcolors.UNDERLINE), bcolors.RED)
+			consoleHelper.printColored("[!] You can download or fork the submodule from {}https://github.com/osuthailand/common".format(bcolors.UNDERLINE), bcolors.RED)
 			sys.exit()
 		elif LooseVersion(glob.COMMON_VERSION_REQ) > LooseVersion(glob.COMMON_VERSION):
 			consoleHelper.printColored("[!] Your common submodule version is below the required version number for this version of lets.", bcolors.RED)
