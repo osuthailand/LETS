@@ -48,6 +48,6 @@ class handler(requestsManager.asyncRequestHandler):
 			userID = int(glob.db.execute("INSERT INTO users(username, username_safe, password_md5, salt, email, register_datetime, privileges, password_version) VALUES (%s,       %s,            %s,            '',  %s,     %s,                 1048576,          2)", [username, userUtils.safeUsername(username), passwordUtils.genBcrypt(hashlib.md5(password.encode('utf-8')).hexdigest()), email, int(time.time())]))
 			glob.db.execute("INSERT INTO users_stats(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (%s, %s, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)", [userID, username])
 			glob.db.execute("INSERT INTO rx_stats(id, username, user_color, user_style, ranked_score_std, playcount_std, total_score_std, ranked_score_taiko, playcount_taiko, total_score_taiko, ranked_score_ctb, playcount_ctb, total_score_ctb, ranked_score_mania, playcount_mania, total_score_mania) VALUES (%s, %s, 'black', '', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)", [userID, username])
-			log.info("{} created they account using ingame registration.".format(username))
+			log.info("{} created their account using ingame registration.".format(username))
 		except Exception as e:
 			log.error(e)
