@@ -220,15 +220,15 @@ class handler(requestsManager.asyncRequestHandler):
 						oldScoreboard.setPersonalBest()
 						oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
 						oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank)
-					else:
+				else:
 					# We have an older personal best. Get its rank (try to get it from cache first)
-						oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
-						if oldPersonalBestRank == 0:
+					oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+					if oldPersonalBestRank == 0:
 						# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-							oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-							oldScoreboard.setPersonalBest()
-							oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
-							oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
+						oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+						oldScoreboard.setPersonalBest()
+						oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
+						oldPersonalBest = score.score(s.oldPersonalBest, oldPersonalBestRank)
 			else:
 				oldPersonalBestRank = 0
 				oldPersonalBest = None
@@ -512,24 +512,15 @@ class handler(requestsManager.asyncRequestHandler):
 
 
 				# send message to #announce if we're rank #1
-				if UsingRelax:
-					if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-						annmsg = "[RELAX] [https://bigtu.vip/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-									userID,
-									username.encode().decode("ASCII", "ignore"),
-									beatmapInfo.beatmapID,
-									beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-									gameModes.getGamemodeFull(s.gameMode)
-								)
-				else:
-					if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-						annmsg = "[VANILLA] [https://bigtu.vip/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-							userID,
-							username.encode().decode("ASCII", "ignore"),
-							beatmapInfo.beatmapID,
-							beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-							gameModes.getGamemodeFull(s.gameMode)
-								)
+				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
+					annmsg = "[{}] [https://bigtu.vip/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+						"RELAX" if UsingRelax else "VANILLA",
+						userID,
+						username.encode().decode("ASCII", "ignore"),
+						beatmapInfo.beatmapID,
+						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+						gameModes.getGamemodeFull(s.gameMode)
+							)
 								
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
