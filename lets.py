@@ -164,12 +164,12 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Checking folders... ")
 		paths = [
 			".data",
-			"{}_relax".format(glob.conf.config["server"]["replayspath"]),
-			glob.conf.config["server"]["screenshotspath"],
-			".data/screenshots",
 			".data/oppai",
 			".data/catch_the_pp",
-			glob.conf.config["server"]["beatmapspath"]
+			glob.conf.config["server"]["replayspath"],
+			"{}_relax".format(glob.conf.config["server"]["replayspath"]),
+			glob.conf.config["server"]["beatmapspath"],
+			glob.conf.config["server"]["screenshotspath"]
 		]
 		for i in paths:
 			if not os.path.exists(i):
