@@ -123,7 +123,7 @@ class config:
 		self.config.set("server", "apikey", "changeme")
 		self.config.set("server", "replayspath", ".data/replays")
 		self.config.set("server", "beatmapspath", ".data/beatmaps")
-		self.config.set("server", "screenshotspath", "./data/screenshots")
+		self.config.set("server", "screenshotspath", ".data/screenshots")
 
 		self.config.add_section("sentry")
 		self.config.set("sentry", "enable", "False")
