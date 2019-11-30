@@ -42,6 +42,7 @@ from handlers import getFullErrorHandler
 from handlers import osuErrorHandler
 from handlers import osuSearchHandler
 from handlers import osuSearchSetHandler
+from handlers import osz2GetID
 from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
@@ -60,6 +61,7 @@ def make_app():
 		(r"/users", inGameRegistrationHandler.handler),
 		(r"/web/bancho_connect.php", banchoConnectHandler.handler),
 		(r"/web/osu-osz2-getscores.php", getScoresHandler.handler),
+		(r"/web/osu-osz2-bmsubmit-getid.php", osz2GetID.handler),
 		(r"/web/osu-submit-modular.php", submitModularHandler.handler),
 		(r"/web/osu-submit-modular-selector.php", submitModularHandler.handler),
 		(r"/web/osu-getreplay.php", getReplayHandler.handler),
@@ -93,6 +95,7 @@ def make_app():
 		(r"/letsapi/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
 
 		# Not done yet
+		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
 		(r"/web/osu-addfavourite.php", osuErrorHandler.handler), # I use the error handler as I want an empty response for the time being
 		(r"/web/lastfm.php", emptyHandler.handler),
 		(r"/web/osu-checktweets.php", emptyHandler.handler),
