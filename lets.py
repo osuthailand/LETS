@@ -81,8 +81,8 @@ def make_app():
 		(r"/web/replays_relax/(.*)", getFullReplayHandlerRelax.handler),
 		(r"/web/errorlogs/(.*)", getFullErrorHandler.handler),
 
-		(r"/p/verify", redirectHandler.handler, dict(destination="https://bigtu.vip/")),
-		(r"/u/(.*)", redirectHandler.handler, dict(destination="https://bigtu.vip/u/{}")),
+		(r"/p/verify", redirectHandler.handler, dict(destination="https://ainu.pw/")),
+		(r"/u/(.*)", redirectHandler.handler, dict(destination="https://ainu.pw/u/{}")),
 
 		(r"/api/v1/status", apiStatusHandler.handler),
 		(r"/api/v1/pp", apiPPHandler.handler),
