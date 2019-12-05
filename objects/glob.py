@@ -10,7 +10,7 @@ try:
 except:
 	VERSION = "Unknown"
 ACHIEVEMENTS_VERSION = 1
-
+starttime = None
 DATADOG_PREFIX = "lets"
 db = None
 redis = None
