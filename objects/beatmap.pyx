@@ -98,7 +98,7 @@ class beatmap:
 			self.rankedStatus if frozen == 0 else 2,
 			int(time.time()),
 			frozen
-		])
+		))
 
 	def setDataFromDB(self, md5):
 		"""
@@ -120,7 +120,7 @@ class beatmap:
 			return False
 
 		# Set cached data period
-		expire = int(glob.conf.config["server"]["beatmapcacheexpire"])
+		expire = 86400
 
 		# If the beatmap is ranked, we don't need to refresh data from osu!api that often
 		if data["ranked"] >= rankedStatuses.RANKED and data["ranked_status_freezed"] == 0:

@@ -79,6 +79,7 @@ class score:
 			return x // 1.5
 		elif (self.mods & mods.HALFTIME) > 0:
 			return x // 0.75
+		return x
 
 	@property
 	def fullPlayTime(self):
@@ -214,10 +215,10 @@ class score:
 			self.cMiss = int(scoreData[8])
 			self.score = int(scoreData[9])
 			self.maxCombo = int(scoreData[10])
-			self.fullCombo = True if scoreData[11] == 'True' else False
+			self.fullCombo = scoreData[11] == 'True'
 			#self.rank = scoreData[12]
 			self.mods = int(scoreData[13])
-			self.passed = True if scoreData[14] == 'True' else False
+			self.passed = scoreData[14] == 'True'
 			self.gameMode = int(scoreData[15])
 			#self.playDateTime = int(scoreData[16])
 			self.playDateTime = int(time.time())
@@ -263,43 +264,43 @@ class score:
 				# Get userID
 				userID = userUtils.getID(self.playerName)
 
-			# Make sure we don't have another score identical to this one
-			# TODO: time check
-			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
-			if duplicate is not None:
-				# Found same score in db. Don't save this score.
-				self.completed = -1
-				return
+				# Make sure we don't have another score identical to this one
+				# TODO: time check
+				duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
+				if duplicate is not None:
+					# Found same score in db. Don't save this score.
+					self.completed = -1
+					return
 
-			# No duplicates found.
-			# Get right "completed" value
-			personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
-					glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
-				),
-				[userID, self.fileMd5, self.gameMode])
-			if personalBest is None:
-				# This is our first score on this map, so it's our best score
-				self.completed = 3
-				self.rankedScoreIncrease = self.score
-				self.oldPersonalBest = 0
-				self.personalOldBestScore = None
-			else:
-				self.personalOldBestScore = personalBest["id"]
-				self.calculatePP()
-				# Compare personal best's score with current score
-				if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-					# New best score
+				# No duplicates found.
+				# Get right "completed" value
+				personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
+						glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
+					),
+					[userID, self.fileMd5, self.gameMode])
+				if personalBest is None:
+					# This is our first score on this map, so it's our best score
 					self.completed = 3
-					self.rankedScoreIncrease = self.score-personalBest["score"]
-					self.oldPersonalBest = personalBest["id"]
-				else:
-					self.completed = 2
-					self.rankedScoreIncrease = 0
+					self.rankedScoreIncrease = self.score
 					self.oldPersonalBest = 0
-				elif self.quit:
-					self.completed = 0
-				elif self.failed:
-					self.completed = 1
+					self.personalOldBestScore = None
+				else:
+					self.personalOldBestScore = personalBest["id"]
+					self.calculatePP()
+					# Compare personal best's score with current score
+					if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+						# New best score
+						self.completed = 3
+						self.rankedScoreIncrease = self.score-personalBest["score"]
+						self.oldPersonalBest = personalBest["id"]
+					else:
+						self.completed = 2
+						self.rankedScoreIncrease = 0
+						self.oldPersonalBest = 0
+			elif self.quit:
+				self.completed = 0
+			elif self.failed:
+				self.completed = 1
 		finally:
 			log.debug("Completed status: {}".format(self.completed))
 
