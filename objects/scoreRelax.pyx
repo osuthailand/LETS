@@ -1,5 +1,7 @@
 import time
 
+import pp
+from common.constants import gameModes, mods
 from objects import beatmap
 from common import generalUtils
 from common.constants import gameModes
@@ -22,8 +24,9 @@ class score:
 		gameModes.MANIA: wifipiano2.piano
 	}
 	__slots__ = ["scoreID", "playerName", "score", "maxCombo", "c50", "c100", "c300", "cMiss", "cKatu", "cGeki",
-	             "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
-	             "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease", "personalOldBestScore"]
+				 "fullCombo", "mods", "playerUserID","rank","date", "hasReplay", "fileMd5", "passed", "playDateTime",
+				 "gameMode", "completed", "accuracy", "pp", "oldPersonalBest", "rankedScoreIncrease", "personalOldBestScore",
+				 "_playTime", "_fullPlayTime", "quit", "failed"]
 	def __init__(self, scoreID = None, rank = None, setData = True):
 		"""
 		Initialize a (empty) score object.
@@ -63,8 +66,44 @@ class score:
 		self.rankedScoreIncrease = 0
 		self.personalOldBestScore = None
 
+		self._playTime = None
+		self._fullPlayTime = None
+		self.quit = None
+		self.failed = None
+
+
 		if scoreID is not None and setData:
 			self.setDataFromDB(scoreID, rank)
+	def _adjustedSeconds(self, x):
+		if (self.mods & mods.DOUBLETIME) > 0:
+			return x // 1.5
+		elif (self.mods & mods.HALFTIME) > 0:
+			return x // 0.75
+
+	@property
+	def fullPlayTime(self):
+		return self._fullPlayTime
+
+	@fullPlayTime.setter
+	def fullPlayTime(self, value):
+		value = max(0, value)
+		self._fullPlayTime = self._adjustedSeconds(value)
+
+	@property
+	def playTime(self):
+		return self._playTime
+
+	@playTime.setter
+	def playTime(self, value):
+		value = max(0, value)
+		value = self._adjustedSeconds(value)
+		# Do not consider the play time at all if it's greater than the length of the map + 1/3
+		# This is because the client sends the ms when the player failed relative to the
+		# song (audio file) start, so compilations and maps with super long introductions
+		# break the system without this check
+		if self.fullPlayTime is not None and value > self.fullPlayTime * 1.33:
+			value = 0
+		self._playTime = value
 
 	def calculateAccuracy(self):
 		"""
@@ -147,7 +186,7 @@ class score:
 		self.cMiss = data["misses_count"]
 		self.cKatu = data["katus_count"]
 		self.cGeki = data["gekis_count"]
-		self.fullCombo = True if data["full_combo"] == 1 else False
+		self.fullCombo = data["full_combo"] == 1
 		self.mods = data["mods"]
 		self.rank = rank if rank is not None else ""
 		self.date = data["time"]
@@ -157,7 +196,7 @@ class score:
 		self.pp = data["pp"]
 		self.calculateAccuracy()
 
-	def setDataFromScoreData(self, scoreData):
+	def setDataFromScoreData(self, scoreData, quit_=None, failed=None):
 		"""
 		Set this object's score data from scoreData list (submit modular)
 
@@ -184,6 +223,8 @@ class score:
 			self.playDateTime = int(time.time())
 			self.calculateAccuracy()
 			#osuVersion = scoreData[17]
+			self.quit = quit_
+			self.failed = failed
 			self.calculatePP()
 
 			# Set completed status
@@ -207,19 +248,24 @@ class score:
 			self.mods,
 			self.playerUserID,
 			self.rank,
-			self.date)
+			self.date
+		)
 
 	def setCompletedStatus(self):
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
-		self.completed = 0
-		if self.passed and scoreUtils.isRankable(self.mods):
-			# Get userID
-			userID = userUtils.getID(self.playerName)
+		try:
+			self.completed = 0
+			if not scoreUtils.isRankable(self.mods):
+				return
+			if self.passed:
+				# Get userID
+				userID = userUtils.getID(self.playerName)
 
 			# Make sure we don't have another score identical to this one
-			duplicate = glob.db.fetch("SELECT id FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND time = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.date, self.score])
+			# TODO: time check
+			duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
 			if duplicate is not None:
 				# Found same score in db. Don't save this score.
 				self.completed = -1
@@ -250,17 +296,21 @@ class score:
 					self.completed = 2
 					self.rankedScoreIncrease = 0
 					self.oldPersonalBest = 0
-				
-		log.debug("Completed status: {}".format(self.completed))
+				elif self.quit:
+					self.completed = 0
+				elif self.failed:
+					self.completed = 1
+		finally:
+			log.debug("Completed status: {}".format(self.completed))
 
 	def saveScoreInDB(self):
 		"""
 		Save this score in DB (if passed and mods are valid)
 		"""
 		# Add this score
-		if self.completed >= 2:
-			query = "INSERT INTO scores_relax (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, time, play_mode, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
-			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.completed, self.accuracy * 100, self.pp]))
+		if self.completed >= 0:
+			query = "INSERT INTO scores_relax (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, `time`, play_mode, playtime, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.playTime if self.playTime is not None and not self.passed else self.fullPlayTime, self.completed, self.accuracy * 100, self.pp]))
 
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0 and self.completed == 3:
@@ -276,7 +326,7 @@ class score:
 
 		# Calculate pp
 		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-			and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in score.PP_CALCULATORS:
+			and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
 			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
 			self.pp = calculator.pp
 		else:

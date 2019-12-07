@@ -224,6 +224,7 @@ class score:
 			#osuVersion = scoreData[17]
 			self.quit = quit_
 			self.failed = failed
+			self.calculatePP()
 
 			# Set completed status
 			self.setCompletedStatus()
