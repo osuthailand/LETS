@@ -199,13 +199,15 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
+			unrestricted_user = userUtils.noPPLimit(userID, relax)
+
 			if UsingRelax: 
-				if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not restricted:
+				if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not unrestricted_user and not restricted:
 					userUtils.restrict(userID)
 					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 			else:
-				if (s.pp >= 800 and s.gameMode == gameModes.STD) and not restricted:
+				if (s.pp >= 800 and s.gameMode == gameModes.STD) and not unrestricted_user and not restricted:
 					userUtils.restrict(userID)
 					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
