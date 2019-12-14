@@ -199,18 +199,23 @@ class handler(requestsManager.asyncRequestHandler):
 				midPPCalcException = e
 
 			# Restrict obvious cheaters
-			unrestricted_user = userUtils.noPPLimit(userID, relax)
-
-			if UsingRelax: 
-				if (glob.conf.extra["lets"]["submit"]["max-std-pp"] >= 0 and s.pp >= glob.conf.extra["lets"]["submit"]["max-std-pp"] and s.gameMode == gameModes.STD) and not unrestricted_user and not restricted:
+			if not restricted:
+				rx_pp = glob.conf.extra["lets"]["submit"]["max-std-pp"]
+				oof_pp = glob.conf.extra["lets"]["submit"]["max-vanilla-pp"]
+				
+				relax = 1 if used_mods & 128 else 0
+				
+				unrestricted_user = userUtils.noPPLimit(userID, relax)
+				
+				if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
 					userUtils.restrict(userID)
 					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
-			else:
-				if (s.pp >= 800 and s.gameMode == gameModes.STD) and not unrestricted_user and not restricted:
-					userUtils.restrict(userID)
-					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				else:
+					if (s.pp >= oof_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
+						userUtils.restrict(userID)
+						userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+						log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Check notepad hack
 			if bmk is None and bml is None:
@@ -380,8 +385,12 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
-				oldUserData = glob.userStatsCache.get(userID, s.gameMode)
-				oldRank = userUtils.getGameRank(userID, s.gameMode)
+				if UsingRelax:
+					oldUserData = glob.userStatsCache.get(userID, s.gameMode)
+					oldRank = userUtils.getGameRankRx(userID, s.gameMode)
+				else:
+					oldUserData = glob.userStatsCache.get(userID, s.gameMode)
+					oldRank = userUtils.getGameRank(userID, s.gameMode)
 
 				# Try to get oldPersonalBestRank from cache
 				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
@@ -435,7 +444,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Score has been submitted, do not retry sending the score if
 			# there are exceptions while building the ranking panel
-			keepSending = True
+			keepSending = False
 
 			# At the end, check achievements
 			if s.passed:
