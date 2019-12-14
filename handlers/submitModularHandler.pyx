@@ -207,10 +207,11 @@ class handler(requestsManager.asyncRequestHandler):
 				
 				unrestricted_user = userUtils.noPPLimit(userID, relax)
 				
-				if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
-					userUtils.restrict(userID)
-					userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
-					log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				if UsingRelax: 
+					if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
+						userUtils.restrict(userID)
+						userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
+						log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 				else:
 					if (s.pp >= oof_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
 						userUtils.restrict(userID)
