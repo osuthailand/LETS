@@ -17,7 +17,6 @@ cheat_ids = {
     128: 'AqnLibeay32Loaded (lib for SSL)'
 }
 
-
 MODULE_NAME = "lastFMHandler"
 class handler(requestsManager.asyncRequestHandler):
     """
