@@ -26,7 +26,7 @@ from helpers import replayHelper
 from helpers import replayHelperRelax
 from helpers import leaderboardHelper
 from helpers import leaderboardHelperRelax
-from helpers.generalHelper import zingonify
+from helpers.generalHelper import zingonify, getHackByFlag
 from objects import beatmap
 from objects import glob
 from objects import score
@@ -261,6 +261,21 @@ class handler(requestsManager.asyncRequestHandler):
 			log.debug("Resetting score lock key {}".format(lock_key))
 			glob.redis.delete(lock_key)
 			
+			if not restricted:
+				# Checking for client ac flags
+				haxFlags = scoreData[17].count(' ') # 4 is normal, 0 is irregular but inconsistent.
+				if haxFlags != 4 and haxFlags != 0 and s.completed > 1 and s.pp > 100:
+					hack = getHackByFlag(int(haxFlags))
+					if type(hack) == str:
+						# okay we found some cheater
+						webhook = Webhook(glob.conf.config["discord"]["ahook"],
+										  color=0xc32c74,
+										  footer="This player is such a shame, bro.")
+
+						webhook.set_title(title=f"Catched some cheater {username} ({userID})")
+						webhook.set_desc(f'This body catched with flag {haxFlags}\nIn enuming: {hack}')
+						webhook.post()
+
 			# Client anti-cheat flags
 			'''ignoreFlags = 4
 			if glob.debug:
