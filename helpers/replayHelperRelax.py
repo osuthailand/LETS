@@ -63,7 +63,7 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
         [generalHelper.toDotTicks(int(scoreData["time"])), dataTypes.uInt64],
         [rawReplay, dataTypes.rawReplay],
         [0, dataTypes.uInt32],
-        [0, dataTypes.uInt32],
+        [scoreData['id'], dataTypes.uInt64],
     ])
 
     # Return full replay
