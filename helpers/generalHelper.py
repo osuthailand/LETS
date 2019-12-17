@@ -29,7 +29,7 @@ cheat_ids = {
     2: 'Console in BG is found',
     4: 'Wrong mod combination',
     8: 'Invalid name?',
-    13: 'ReLife|HqOsu has loaded'
+    13: 'ReLife|HqOsu has loaded',
     16: 'Invalid file?',
     32: 'ReLife|HqOsu has loaded',
     64: 'AqnSdl2Loaded (lib for overlay)',
