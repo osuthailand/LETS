@@ -19,8 +19,8 @@ class handler(requestsManager.asyncRequestHandler):
     @tornado.gen.engine
     def asyncGet(self):
         webhook = Webhook(glob.conf.config["discord"]["ahook"],
-                  color=0xc32c74,
-                  footer="stupid anticheat")
+                  color=0xadd8e6,
+                  footer="Man... this is worst player.")
 
         ip = self.getRequestIP()
         if not requestsManager.checkArguments(self.request.arguments, ["b", "ha", "us"]):

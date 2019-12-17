@@ -35,6 +35,7 @@ from objects import scoreRelax
 from objects import scoreboardRelax
 from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
+from secret.discord_hooks import Webhook
 
 MODULE_NAME = "submit_modular"
 class handler(requestsManager.asyncRequestHandler):
