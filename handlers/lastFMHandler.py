@@ -5,17 +5,7 @@ from common.ripple import userUtils
 from common.web import requestsManager
 from secret.discord_hooks import Webhook
 from objects import glob
-
-cheat_ids = {
-    1: 'ReLife|HqOsu is running',
-    2: 'Console in BG is found',
-    4: 'Unknown but strange',
-    8: 'Invalid name?',
-    16: 'Invalid file?',
-    32: 'ReLife|HqOsu has loaded',
-    64: 'AqnSdl2Loaded (lib for overlay)',
-    128: 'AqnLibeay32Loaded (lib for SSL)'
-}
+from helpers import generalHelper
 
 MODULE_NAME = "lastFMHandler"
 class handler(requestsManager.asyncRequestHandler):
@@ -54,14 +44,15 @@ class handler(requestsManager.asyncRequestHandler):
 
         arguments_cheat = int(arguments_cheat)
         # Let's try found something
-        cheat_id = cheat_ids.get(arguments_cheat, -1)
-        if cheat_id == -1:
-            return self.write("-3")
-
-        # OUGH OUGH CALL THE POLICE! WE CATCHED SOME SHIT
-        # LET'S SEND THIS TO POLICE
+        cheat_id = generalHelper.getHackByFlag(arguments_cheat)
         webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-        webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
+        if type(cheat_id) == str:
+            webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
+        else:
+            webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
+
         webhook.post()
+        # Ask cheater to leave game(no i just kill him client ;d)
+        glob.redis.publish("ainu:hqosu", userID)
 
         return self.write("-3")
