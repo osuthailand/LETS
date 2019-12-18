@@ -148,7 +148,7 @@ class config:
 		self.config.set("discord", "boturl", "")
 		self.config.set("discord", "devgroup", "")
 		self.config.set("discord", "secretwebhook", "")
-		self.config.set("discord", "awebhook", "")
+		self.config.set("discord", "ahook", "")
 
 		self.config.add_section("cono")
 		self.config.set("cono", "enable", "False")
