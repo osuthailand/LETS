@@ -100,6 +100,9 @@ class handler(requestsManager.asyncRequestHandler):
 					# Generic acc/nomod
 					# Get cached pp values
 					cachedPP = bmap.getCachedTillerinoPP()
+					if modsEnum&mods.RELAX or modsEnum&mods.RELAX2:
+						cachedPP = [0,0,0,0]
+
 					if cachedPP != [0,0,0,0]:
 						log.debug("Got cached pp.")
 						returnPP = cachedPP
@@ -113,10 +116,11 @@ class handler(requestsManager.asyncRequestHandler):
 						returnPP = oppai.pp
 						bmap.starsStd = oppai.stars
 
-						# Cache values in DB
-						log.debug("Saving cached pp...")
-						if type(returnPP) is list and len(returnPP) == 4:
-							bmap.saveCachedTillerinoPP(returnPP)
+						if not modsEnum&mods.RELAX or modsEnum&mods.RELAX2:
+							# Cache values in DB
+							log.debug("Saving cached pp...")
+							if type(returnPP) == list and len(returnPP) == 4:
+								bmap.saveCachedTillerinoPP(returnPP)
 				else:
 					# Specific accuracy/mods, calculate pp
 					# Create oppai instance
