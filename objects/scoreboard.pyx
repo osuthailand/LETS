@@ -25,7 +25,7 @@ class scoreboard:
 		self.country = country
 		self.friends = friends
 		self.mods = mods
-		self.relax = 0 if self.mods & 128 else 1
+		self.relax = 0
 		self.ppboard = userUtils.PPBoard(self.userID, self.relax)
 		if setScores:
 			self.setScores()
