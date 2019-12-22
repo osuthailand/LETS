@@ -25,6 +25,8 @@ class scoreboard:
 		self.country = country
 		self.friends = friends
 		self.mods = mods
+		self.relax = 0 if self.mods & 128 else 1
+		self.ppboard = userUtils.PPBoard(self.userID, self.relax)
 		if setScores:
 			self.setScores()
 
@@ -122,10 +124,11 @@ class scoreboard:
 			friends = ""
 
 		# Sort and limit at the end
-		if not glob.conf.extra["lets"]["scoreboard"]["ppboard"] and self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
+		#if not glob.conf.extra["lets"]["scoreboard"]["ppboard"] and self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
+		if not self.ppboard and self.mods <= -1 or self.mods & modsEnum.AUTOPLAY == 0:
 			# Order by score if we aren't filtering by mods or autoplay mod is disabled
 			order = "ORDER BY score DESC"
-		elif self.mods & modsEnum.AUTOPLAY > 0 or glob.conf.extra["lets"]["scoreboard"]["ppboard"]:
+		elif self.mods & modsEnum.AUTOPLAY > 0 or self.ppboard:
 			# Otherwise, filter by pp
 			order = "ORDER BY pp DESC"
 		limit = "LIMIT 50"
@@ -203,7 +206,8 @@ class scoreboard:
 		if hasScore is None:
 			return
 
-		overwrite = glob.conf.extra["lets"]["scoreboard"]["ppboard"] and "pp" or "score"
+		#overwrite = glob.conf.extra["lets"]["scoreboard"]["ppboard"] and "pp" or "score"
+		overwrite = self.ppboard and "pp" or "score"
 		
 		# We have a score, run the huge query
 		# Base query
@@ -241,10 +245,12 @@ class scoreboard:
 			# Set personal best score rank
 			self.setPersonalBest()	# sets self.personalBestRank with the huge query
 			self.scores[0].setRank(self.personalBestRank)
-			data += self.scores[0].getData(pp=glob.conf.extra["lets"]["scoreboard"]["ppboard"])
+			data += self.scores[0].getData(pp=self.ppboard)
+			#data += self.scores[0].getData(pp=glob.conf.extra["lets"]["scoreboard"]["ppboard"])
 
 		# Output top 50 scores
 		for i in self.scores[1:]:
-			data += i.getData(pp=glob.conf.extra["lets"]["scoreboard"]["ppboard"] or (self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0))
+			data += i.getData(pp=self.ppboard or (self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0))
+			#data += i.getData(pp=glob.conf.extra["lets"]["scoreboard"]["ppboard"] or (self.mods > -1 and self.mods & modsEnum.AUTOPLAY > 0))
 
 		return data
