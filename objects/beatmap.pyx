@@ -185,7 +185,7 @@ class beatmap:
 			mainData = dataMania
 
 		# If the beatmap is frozen and still valid from osu!api, return True so we don't overwrite anything
-		if mainData is not None and self.rankedStatusFrozen == 1:
+		if mainData is not None and self.rankedStatusFrozen == 1 and self.beatmapSetID > 100000000:
 			return True
 
 		# Can't fint beatmap by MD5. The beatmap has been updated. Check with beatmap set ID

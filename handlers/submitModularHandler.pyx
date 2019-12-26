@@ -178,7 +178,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Calculate PP
 			length = 0
-			if s.passed:
+			if s.passed and beatmapInfo.beatmapID < 100000000:
 				length = userUtils.getBeatmapTime(beatmapInfo.beatmapID)
 			else:
 				length = math.ceil(int(self.get_argument("ft")) / 1000)
