@@ -99,8 +99,9 @@ def make_app():
 		# Not done yet
 		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
 		(r"/web/osu-markasread.php", emptyHandler.handler), # Mark As Read
-		(r"/web/osu-addfavourite.php", osuErrorHandler.handler), # I use the error handler as I want an empty response for the time being
-		(r"/web/osu-checktweets.php", emptyHandler.handler),
+		(r"/web/osu-addfavourite.php", emptyHandler.handler), # Add Favorite
+		(r"/web/osu-checktweets.php", emptyHandler.handler), # Do we need this?
+		(r"/web/osu-session.php"), emptyHandler.handler), # Another stuff by Dr. peppy (maybe useful for detecting AntiCheat... I guess)
 
 		(r"/loadTest", loadTestHandler.handler),
 	], default_handler_class=defaultHandler.handler)
