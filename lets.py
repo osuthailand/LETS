@@ -43,6 +43,7 @@ from handlers import getFullErrorHandler
 from handlers import osuErrorHandler
 from handlers import osuSearchHandler
 from handlers import osuSearchSetHandler
+from handlers import osuSessionHandler
 from handlers import redirectHandler
 from handlers import submitModularHandler
 from handlers import uploadScreenshotHandler
@@ -69,6 +70,7 @@ def make_app():
 		(r"/web/osu-screenshot.php", uploadScreenshotHandler.handler),
 		(r"/web/osu-search.php", osuSearchHandler.handler),
 		(r"/web/osu-search-set.php", osuSearchSetHandler.handler),
+        (r"/web/osu-session.php", osuSessionHandler.handler),
 		(r"/web/check-updates.php", checkUpdatesHandler.handler),
 		(r"/web/osu-error.php", osuErrorHandler.handler),
 		(r"/web/osu-comment.php", commentHandler.handler),
@@ -101,7 +103,6 @@ def make_app():
 		(r"/web/osu-markasread.php", emptyHandler.handler), # Mark As Read
 		(r"/web/osu-addfavourite.php", emptyHandler.handler), # Add Favorite
 		(r"/web/osu-checktweets.php", emptyHandler.handler), # Do we need this?
-		(r"/web/osu-session.php", osuErrorHandler.handler), # Another stuff by Dr. peppy (maybe useful for detecting AntiCheat... I guess)
 
 		(r"/loadTest", loadTestHandler.handler),
 	], default_handler_class=defaultHandler.handler)

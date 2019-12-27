@@ -24,6 +24,15 @@ def toDotTicks(unixTime):
     delt = unixStamp-base
     return int(delt.total_seconds())*10000000
 
+def setUserSession(userID: int, sessionObj: dict):
+    '''
+    Thanks to osukurikku's LETS
+    Commit ID: cad58ed96f52847c8b89b066586b9f3a8c4d4920
+    '''
+    glob.db.execute("UPDATE users SET last_session = %s WHERE userID = %s", [
+                    json.dumps(sessionObj), userID])
+    return True
+
 cheat_ids = {
     1: 'ReLife|HqOsu is running',
     2: 'Console in BG is found',
