@@ -71,6 +71,8 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get beatmap md5 from osuapi
 			# TODO: Move this to beatmap object
 			osuapiData = osuapiHelper.osuApiRequest("get_beatmaps", "b={}".format(beatmapID))
+			if int(beatmapID) > 100000000:
+				raise exceptions.ppCustomBeatmap(MODULE_NAME)
 			if osuapiData is None or "file_md5" not in osuapiData or "beatmapset_id" not in osuapiData:
 				raise exceptions.invalidBeatmapException(MODULE_NAME)
 			beatmapMd5 = osuapiData["file_md5"]
@@ -154,6 +156,9 @@ class handler(requestsManager.asyncRequestHandler):
 			# Set error and message
 			statusCode = 400
 			data["message"] = "missing required arguments"
+		except exceptions.ppCustomBeatmap:
+			statusCode = 400
+			data["message"] = "Custom map does not supported pp calculating yet"
 		except exceptions.invalidBeatmapException:
 			statusCode = 400
 			data["message"] = "beatmap not found"

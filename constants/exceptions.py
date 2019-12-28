@@ -29,6 +29,9 @@ class fileNotFoundException(Exception):
 	def __init__(self, handler, f):
 		log.warning("{} - File not found ({})".format(handler, f))
 
+class ppCustomBeatmap(Exception):
+	pass
+
 class invalidBeatmapException(Exception):
 	pass
 
