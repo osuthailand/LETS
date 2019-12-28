@@ -392,12 +392,8 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
-				if UsingRelax:
-					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-					oldRank = userUtils.getGameRankRx(userID, s.gameMode)
-				else:
-					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-					oldRank = userUtils.getGameRank(userID, s.gameMode)
+				oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
+				oldRank = userUtils.getGameRankRx(userID, s.gameMode) if UsingRelax else userUtils.getGameRank(userID, s.gameMode)
 
 				# Try to get oldPersonalBestRank from cache
 				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
