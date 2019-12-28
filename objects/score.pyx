@@ -330,9 +330,15 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-			and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
-			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
-			self.pp = calculator.pp
+		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
+			# Loved map check
+			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+				self.pp = 0
+			
+			# Normal score
+			elif b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
+				and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
+				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+				self.pp = calculator.pp
 		else:
 			self.pp = 0

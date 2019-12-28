@@ -252,7 +252,7 @@ class score:
 			self.date
 		)
 
-	def setCompletedStatus(self):
+	def setCompletedStatus(self, b = None):
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
@@ -293,6 +293,12 @@ class score:
 						self.completed = 3
 						self.rankedScoreIncrease = self.score-personalBest["score"]
 						self.oldPersonalBest = personalBest["id"]
+					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+						if self.score > personalBest["score"]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
 					else:
 						self.completed = 2
 						self.rankedScoreIncrease = 0
@@ -326,9 +332,15 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-			and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
-			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
-			self.pp = calculator.pp
+		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
+			# Loved map check
+			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+				self.pp = 0
+			
+			# Normal score
+			elif b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
+				and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
+				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+				self.pp = calculator.pp
 		else:
 			self.pp = 0
