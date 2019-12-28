@@ -26,7 +26,7 @@ class scoreboardRelax:
 		self.friends = friends
 		self.mods = mods
 		self.relax = 1
-		self.ppboard = userUtils.PPBoard(self.userID, self.relax)
+		self.ppboard = 0 if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and rankedStatuses.LOVED else 1
 		if setScores:
 			self.setScores()
 

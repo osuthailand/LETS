@@ -3,6 +3,7 @@ from common.ripple import userUtils
 from constants import rankedStatuses
 from common.constants import mods as modsEnum
 from objects import glob
+from objects import beatmap
 
 
 class scoreboard:
@@ -26,7 +27,7 @@ class scoreboard:
 		self.friends = friends
 		self.mods = mods
 		self.relax = 0
-		self.ppboard = userUtils.PPBoard(self.userID, self.relax)
+		self.ppboard = 0 if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and rankedStatuses.LOVED else 1
 		if setScores:
 			self.setScores()
 
