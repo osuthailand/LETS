@@ -186,14 +186,14 @@ class scoreboardRelax:
 
 		# It's not even in cache, get it from db
 		if personalBestScore is not None and self.personalBestRank < 1:
-			self.setPersonalBest()
+			self.setPersonalBestRank()
 
 		# Cache our personal best rank so we can eventually use it later as
 		# before personal best rank" in submit modular when building ranking panel
 		if self.personalBestRank >= 1:
 			glob.personalBestCache.set(self.userID, self.personalBestRank, self.beatmap.fileMD5)
 
-	def setPersonalBest(self):
+	def setPersonalBestRank(self):
 		"""
 		Set personal best rank ONLY
 		Ikr, that query is HUGE but xd
@@ -248,7 +248,7 @@ class scoreboardRelax:
 			data += "\n"
 		else:
 			# Set personal best score rank
-			self.setPersonalBest()	# sets self.personalBestRank with the huge query
+			self.setPersonalBestRank()	# sets self.personalBestRank with the huge query
 			self.scores[0].setRank(self.personalBestRank)
 			data += self.scores[0].getData(pp=self.ppboard)
 
