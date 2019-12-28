@@ -27,7 +27,7 @@ class scoreboard:
 		self.friends = friends
 		self.mods = mods
 		self.relax = 0
-		self.ppboard = 0 if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and rankedStatuses.LOVED else 1
+		self.ppboard = 0 if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and beatmap.rankedStatus == 5 else 1
 		if setScores:
 			self.setScores()
 
