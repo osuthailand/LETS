@@ -140,7 +140,10 @@ class handler(requestsManager.asyncRequestHandler):
 			UsingRelax = used_mods & 128
 
 			# Create score object and set its data
-			log.info("{} has submitted a score on {}...".format(username, scoreData[0]))
+			if UsingRelax:
+				log.info("[RELAX] {} has submitted a score on {}...".format(username, scoreData[0]))
+			else:
+				log.info("[VANILLA] {} has submitted a score on {}...".format(username, scoreData[0]))
 			
 			if UsingRelax:
 				s = scoreRelax.score()
@@ -290,65 +293,36 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
 			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
-					or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
-					or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
+			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
+			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Impossible mod combination {} (score submitter)".format(s.mods))
 
 			# NOTE: Process logging was removed from the client starting from 20180322
 			if s.completed == 3 and "pl" in self.request.arguments:
 				butterCake.bake(self, s)
-
-			if UsingRelax:
-				score_id_relax = s.scoreID 
 				
 			# Save replay for all passed scores
 			# Make sure the score has an id as well (duplicated?, query error?)
-			if s.passed and s.scoreID > 0:
-				if UsingRelax:
-					# Save the replay if it was provided
-					log.debug("Saving replay ({})...".format(score_id_relax))
-					replay = self.request.files["score"][0]["body"]
-					with open("{}_relax/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], score_id_relax), "wb") as f:
-						f.write(replay)
-					
-					# Send to cono ALL passed replays, even non high-scores
-					if glob.conf.config["cono"]["enable"]:
-						# We run this in a separate thread to avoid slowing down scores submission,
-						# as cono needs a full replay
-						threading.Thread(target=lambda: glob.redis.publish(
-							"cono:analyze", json.dumps({
-								"score_id": s.scoreID,
-								"beatmap_id": beatmapInfo.beatmapID,
-								"user_id": s.playerUserID,
-								"game_mode": s.gameMode,
-								"pp": s.pp,
-								"replay_data": base64.b64encode(
-									replayHelperRelax.buildFullReplay(
-										s.scoreID,
-										rawReplay=self.request.files["score"][0]["body"]
-									)
-								).decode(),
-							})
-						)).start()
-					else:
-						# Restrict if no replay was provided
-						if not restricted:
-							userUtils.restrict(userID)
-							userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
-													  "(most likely he used a score submitter)")
-							log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
-								username, userID, s.fileMd5
-							), "cm")
-				else:
+			if s.passed and s.scoreID > 0 and s.completed == 3:
+				if "score" in self.request.files:
 					# Save the replay if it was provided
 					log.debug("Saving replay ({})...".format(s.scoreID))
 					replay = self.request.files["score"][0]["body"]
-					with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], s.scoreID), "wb") as f:
-						f.write(replay)
 
-					# Send to cono ALL passed replays, even non high-scores
+					if UsingRelax:
+						with open("{}_relax/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
+							f.write(replay)
+					else:
+						with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
+							f.write(replay)
+
 					if glob.conf.config["cono"]["enable"]:
+						if UsingRelax:
+							RPBUILD = replayHelperRelax.buildFullReplay
+						else:
+							RPBUILD = replayHelper.buildFullReplay
 						# We run this in a separate thread to avoid slowing down scores submission,
 						# as cono needs a full replay
 						threading.Thread(target=lambda: glob.redis.publish(
@@ -358,21 +332,21 @@ class handler(requestsManager.asyncRequestHandler):
 								"user_id": s.playerUserID,
 								"game_mode": s.gameMode,
 								"pp": s.pp,
+								"completed": s.completed,
 								"replay_data": base64.b64encode(
-									replayHelper.buildFullReplay(
+									RPBUILD(
 										s.scoreID,
 										rawReplay=self.request.files["score"][0]["body"]
 									)
 								).decode(),
 							})
 						)).start()
-					else:
-						# Restrict if no replay was provided
-						if not restricted:
+				else:
+					# Restrict if no replay was provided
+					if not restricted:
 							userUtils.restrict(userID)
-							userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score "
-													  "(most likely he used a score submitter)")
-							log.warning("**{}** ({}) has been restricted due to replay not found on map {}".format(
+							userUtils.appendNotes(userID, "Restricted due to missing replay while submitting a score.")
+							log.warning("**{}** ({}) has been restricted due to not submitting a replay on map {}.".format(
 								username, userID, s.fileMd5
 							), "cm")
 
@@ -392,13 +366,12 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
-				oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-				oldRank = userUtils.getGameRankRx(userID, s.gameMode) if UsingRelax else userUtils.getGameRank(userID, s.gameMode)
-
-				# Try to get oldPersonalBestRank from cache
-				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
-				if not oldPersonalBestRank:
-					oldPersonalBestRank = -1
+				if UsingRelax:
+					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
+					oldRank = userUtils.getGameRankRx(userID, s.gameMode)
+				else:
+					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
+					oldRank = userUtils.getGameRank(userID, s.gameMode) 
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
@@ -432,11 +405,18 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# Update leaderboard (global and country) if score/pp has changed
 				if s.completed == 3 and newUserStats["pp"] != oldUserStats["pp"]:
-					leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
-					leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
+					if UsingRelax:
+						leaderboardHelperRelax.update(userID, newUserStats["pp"], s.gameMode)
+						leaderboardHelperRelax.updateCountry(userID, newUserStats["pp"], s.gameMode)
+					else:
+						leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
+						leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
 
 			# Update total hits
-			userUtils.updateTotalHits(score=s)
+			if UsingRelax:
+				userUtils.updateTotalHitsRX(score=s)
+			else:
+				userUtils.updateTotalHits(score=s)
 			# TODO: Update max combo
 			
 			# Update latest activity
