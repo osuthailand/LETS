@@ -1,3 +1,4 @@
+from objects import glob
 from secret.achievements.utils import achievements_response
 
 
@@ -65,7 +66,8 @@ class BeatmapChart(Chart):
         :param new_score: score object of the currently submitted score
         :param beatmap_id: beatmap id, for the clickable link
         """
-        super(BeatmapChart, self).__init__("beatmap", f"https://ripple.moe/b/{beatmap_id}", "Beatmap Ranking")
+        serverurl = glob.conf.config["server"]["serverurl"]
+        super(BeatmapChart, self).__init__("beatmap", f"{serverurl}/b/{beatmap_id}", "Beatmap Ranking")
         self.rank = (old_score.rank if old_score is not None else None, new_score.rank)
         self.max_combo = (old_score.maxCombo if old_score is not None else None, new_score.maxCombo)
         self.accuracy = (old_score.accuracy * 100 if old_score is not None else None, new_score.accuracy * 100)
@@ -103,7 +105,8 @@ class OverallChart(Chart):
         :param old_rank: global rank before submitting the scpre
         :param new_rank: global rank after submitting the score
         """
-        super(OverallChart, self).__init__("overall", f"https://ripple.moe/u/{user_id}", "Overall Ranking")
+        serverurl = glob.conf.config["server"]["serverurl"]
+        super(OverallChart, self).__init__("overall", f"https://{serverurl}/u/{user_id}", "Overall Ranking")
         self.rank = (old_rank, new_rank)
         self.ranked_score = (old_user_stats["rankedScore"], new_user_stats["rankedScore"])
         self.total_score = (old_user_stats["totalScore"], new_user_stats["totalScore"])
