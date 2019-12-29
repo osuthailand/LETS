@@ -525,7 +525,8 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[{}] [https://ainu.pw/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+					annmsg = "[{}] [{}}/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+						glob.conf.config["server"]["serverurl"],
 						"RELAX" if UsingRelax else "VANILLA",
 						userID,
 						username.encode().decode("ASCII", "ignore"),
