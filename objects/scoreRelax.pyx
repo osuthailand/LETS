@@ -321,7 +321,12 @@ class score:
 
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0 and self.completed == 3:
-				glob.db.execute("UPDATE scores_relax SET completed = 2 WHERE id = %s LIMIT 1", [self.oldPersonalBest])
+				glob.db.execute("UPDATE scores_relax SET completed = 2 WHERE id = %s AND completed = 3 LIMIT 1", [self.oldPersonalBest])
+
+						# Update counters in redis
+			glob.redis.incr("ripple:total_submitted_scores", 1)
+			glob.redis.incr("ripple:total_pp", int(self.pp))
+		glob.redis.incr("ripple:total_plays", 1)
 
 	def calculatePP(self, b = None):
 		"""
