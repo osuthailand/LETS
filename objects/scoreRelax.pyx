@@ -224,9 +224,9 @@ class score:
 			self.playDateTime = int(time.time())
 			self.calculateAccuracy()
 			#osuVersion = scoreData[17]
+			self.calculatePP()
 			self.quit = quit_
 			self.failed = failed
-			self.calculatePP()
 
 			# Set completed status
 			self.setCompletedStatus()
@@ -258,8 +258,14 @@ class score:
 		"""
 		try:
 			self.completed = 0
+			
+			# Create beatmap object
+			if b is None:
+				b = beatmap.beatmap(self.fileMd5, 0)
+				
 			if not scoreUtils.isRankable(self.mods):
 				return
+			
 			if self.passed:
 				# Get userID
 				userID = userUtils.getID(self.playerName)
@@ -283,26 +289,31 @@ class score:
 					self.completed = 3
 					self.rankedScoreIncrease = self.score
 					self.oldPersonalBest = 0
-					self.personalOldBestScore = None
 				else:
+					# Set old personal best and calculates PP
 					self.personalOldBestScore = personalBest["id"]
 					self.calculatePP()
 					# Compare personal best's score with current score
-					if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-						# New best score
-						self.completed = 3
-						self.rankedScoreIncrease = self.score-personalBest["score"]
-						self.oldPersonalBest = personalBest["id"]
+					if b.rankedStatus in [rankedStatuses.RANKED, rankedStatuses.APPROVED, rankedStatuses.QUALIFIED]:
+						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
 						if self.score > personalBest["score"]:
 							# New best score
 							self.completed = 3
 							self.rankedScoreIncrease = self.score-personalBest["score"]
 							self.oldPersonalBest = personalBest["id"]
-					else:
-						self.completed = 2
-						self.rankedScoreIncrease = 0
-						self.oldPersonalBest = 0
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 			elif self.quit:
 				self.completed = 0
 			elif self.failed:
@@ -337,15 +348,11 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
-			# Loved map check
-			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-				self.pp = 0
-			
-			# Normal score
-			elif b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-				and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
-				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
-				self.pp = calculator.pp
+		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
+		and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in score.PP_CALCULATORS:
+			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+			self.pp = calculator.pp
+		elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+			self.pp = 0
 		else:
 			self.pp = 0
