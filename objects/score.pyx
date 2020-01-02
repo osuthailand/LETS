@@ -223,9 +223,9 @@ class score:
 			self.playDateTime = int(time.time())
 			self.calculateAccuracy()
 			#osuVersion = scoreData[17]
+			self.calculatePP()
 			self.quit = quit_
 			self.failed = failed
-			self.calculatePP()
 
 			# Set completed status
 			self.setCompletedStatus()
@@ -251,7 +251,7 @@ class score:
 			self.date
 		)
 
-	def setCompletedStatus(self):
+	def setCompletedStatus(self, b = None):
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
@@ -282,20 +282,31 @@ class score:
 					self.completed = 3
 					self.rankedScoreIncrease = self.score
 					self.oldPersonalBest = 0
-					self.personalOldBestScore = None
 				else:
+					# Set old personal best and calculates PP
 					self.personalOldBestScore = personalBest["id"]
 					self.calculatePP()
 					# Compare personal best's score with current score
-					if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-						# New best score
-						self.completed = 3
-						self.rankedScoreIncrease = self.score-personalBest["score"]
-						self.oldPersonalBest = personalBest["id"]
-					else:
-						self.completed = 2
-						self.rankedScoreIncrease = 0
-						self.oldPersonalBest = 0
+					if b.rankedStatus in [rankedStatuses.RANKED, rankedStatuses.APPROVED, rankedStatuses.QUALIFIED]:
+						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
+					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+						if self.score > personalBest["score"]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 			elif self.quit:
 				self.completed = 0
 			elif self.failed:
@@ -330,15 +341,32 @@ class score:
 			b = beatmap.beatmap(self.fileMd5, 0)
 
 		# Calculate pp
-		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
-			# Loved map check
-			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-				self.pp = 0
-			
-			# Normal score
-			elif b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
-				and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
-				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
-				self.pp = calculator.pp
+		if b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.LOVED and b.rankedStatus != rankedStatuses.UNKNOWN \
+		and scoreUtils.isRankable(self.mods) and self.passed and self.gameMode in score.PP_CALCULATORS:
+			calculator = score.PP_CALCULATORS[self.gameMode](b, self)
+			self.pp = calculator.pp
 		else:
 			self.pp = 0
+
+class PerfectScoreFactory:
+	@staticmethod
+	def create(beatmap, game_mode=gameModes.STD):
+		"""
+		Factory method that creates a perfect score.
+		Used to calculate max pp amount for a specific beatmap.
+
+		:param beatmap: beatmap object
+		:param game_mode: game mode number. Default: `gameModes.STD`
+		:return: `score` object
+		"""
+		s = score()
+		s.accuracy = 1.
+		# max combo cli param/arg gets omitted if it's < 0 and oppai/catch-the-pp set it to max combo.
+		# maniapp ignores max combo entirely.
+		s.maxCombo = -1
+		s.fullCombo = True
+		s.passed = True
+		s.gameMode = game_mode
+		if s.gameMode == gameModes.MANIA:
+			s.score = 1000000
+		return s
