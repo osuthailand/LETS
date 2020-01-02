@@ -289,6 +289,7 @@ class score:
 					self.completed = 3
 					self.rankedScoreIncrease = self.score
 					self.oldPersonalBest = 0
+					self.personalOldBestScore = None
 				else:
 					# Set old personal best and calculates PP
 					self.personalOldBestScore = personalBest["id"]
