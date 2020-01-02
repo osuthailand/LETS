@@ -315,6 +315,16 @@ class score:
 							self.completed = 2
 							self.rankedScoreIncrease = 0
 							self.oldPersonalBest = 0
+					elif not glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 			elif self.quit:
 				self.completed = 0
 			elif self.failed:
