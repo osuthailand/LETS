@@ -257,8 +257,14 @@ class score:
 		"""
 		try:
 			self.completed = 0
+			
+			# Create beatmap object
+			if b is None:
+				b = beatmap.beatmap(self.fileMd5, 0)
+				
 			if not scoreUtils.isRankable(self.mods):
 				return
+			
 			if self.passed:
 				# Get userID
 				userID = userUtils.getID(self.playerName)
