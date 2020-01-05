@@ -212,12 +212,12 @@ class handler(requestsManager.asyncRequestHandler):
 				unrestricted_user = userUtils.noPPLimit(userID, relax)
 				
 				if UsingRelax: 
-					if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
+					if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user and not glob.conf.extra["mode"]["no-pp-cap"]:
 						userUtils.restrict(userID)
 						userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 						log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
 				else:
-					if (s.pp >= oof_pp and s.gameMode == gameModes.STD) and not unrestricted_user:
+					if (s.pp >= oof_pp and s.gameMode == gameModes.STD) and not unrestricted_user and not glob.conf.extra["mode"]["no-pp-cap"]:
 						userUtils.restrict(userID)
 						userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 						log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
@@ -255,7 +255,7 @@ class handler(requestsManager.asyncRequestHandler):
 			log.debug("Resetting score lock key {}".format(lock_key))
 			glob.redis.delete(lock_key)
 			
-			if not restricted:
+			if not restricted and glob.conf.extra["mode"]["anticheat"]:
 				# Checking for client ac flags
 				haxFlags = scoreData[17].count(' ') # 4 is normal, 0 is irregular but inconsistent.
 				if haxFlags != 4 and haxFlags != 0 and s.completed > 1 and s.pp > 100:
@@ -282,22 +282,42 @@ class handler(requestsManager.asyncRequestHandler):
 				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
 
 			# สวัสดีฮะ ผมเต้เอ็กเซนไฟไหม้
-			if s.score < 0 or s.score > (2 ** 63) - 1:
+			if s.score < 0 or s.score > (2 ** 63) - 1 or s.score == 2147483647 and glob.conf.extra["mode"]["anticheat"]:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Banned due to negative score (score submitter)")
+			elif s.score < 0 or s.score > (2 ** 63) - 1 or s.score == 2147483647 and not glob.conf.extra["mode"]["anticheat"]:
+				alert = "{}, seems like you've exceed the score limit (INT32) or your score is negative, this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
+				params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": username.encode().decode("ASCII", "ignore"), "msg": alert})
+				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+				return
 
 			# Make sure the score is not memed
 			if s.gameMode == gameModes.MANIA and s.score > 1000000:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Banned due to mania score > 1000000 (score submitter)")
+			elif s.gameMode == gameModes.MANIA and s.score > 1000000 and not glob.conf.extra["mode"]["anticheat"]:
+				alert = "{}, seems like you've exceed osu!Mania score limit (1000000), this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
+				params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": username.encode().decode("ASCII", "ignore"), "msg": alert})
+				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+				return
 
 			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
 			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
-			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0):
+			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
+			and glob.conf.extra["mode"]["anticheat"]:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Impossible mod combination {} (score submitter)".format(s.mods))
+			elif ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
+			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
+			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
+			and not glob.conf.extra["mode"]["anticheat"]:
+				alert = "{}, seems like you've used osu! score submitter limit (Impossible mod combination), this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
+				params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": username.encode().decode("ASCII", "ignore"), "msg": alert})
+				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+				return
 
 			# NOTE: Process logging was removed from the client starting from 20180322
 			if s.completed == 3 and "pl" in self.request.arguments:

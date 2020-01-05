@@ -46,13 +46,17 @@ class handler(requestsManager.asyncRequestHandler):
         # Let's try found something
         cheat_id = generalHelper.getHackByFlag(arguments_cheat)
         webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-        if type(cheat_id) == str:
-            webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
-        else:
-            webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
+        if glob.conf.extra["mode"]["anticheat"]:
+            if type(cheat_id) == str:
+                webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
+            else:
+                webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
 
         webhook.post()
         # Ask cheater to leave game(no i just kill him client ;d)
-        glob.redis.publish("ainu:hqosu", userID)
+        if glob.conf.extra["mode"]["anticheat"]:
+            glob.redis.publish("ainu:hqosu", userID)
+        elif not glob.conf.extra["mode"]["anticheat"]:
+            return self.write("-3")
 
         return self.write("-3")

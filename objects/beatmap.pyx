@@ -75,6 +75,9 @@ class beatmap:
 			# Unfreeze beatmap status
 			frozen = False
 
+		if objects.glob.conf.extra["mode"]["rank-all-maps"]:
+			self.rankedStatus = 2
+
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
 		objects.glob.db.execute(
