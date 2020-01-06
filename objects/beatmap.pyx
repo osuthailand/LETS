@@ -123,7 +123,7 @@ class beatmap:
 			return False
 
 		# Set cached data period
-		expire = 86400
+		expire = int(objects.glob.conf.config["server"]["beatmapcacheexpire"])
 
 		# If the beatmap is ranked, we don't need to refresh data from osu!api that often
 		if data["ranked"] >= rankedStatuses.RANKED and data["ranked_status_freezed"] == 0:
