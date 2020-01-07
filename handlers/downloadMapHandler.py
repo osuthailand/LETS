@@ -20,7 +20,7 @@ class handler(requestsManager.asyncRequestHandler):
 			bid = int(bid)
 
 			self.set_status(302, "Moved Temporarily")
-			url = "https://bm6.ppy.sh/d/{}{}".format(bid, "?novideo" if noVideo else "")
+			url = "https://storage.ainu.pw/d/{}{}".format(bid, "?novideo" if noVideo else "")
 			self.add_header("Location", url)
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
