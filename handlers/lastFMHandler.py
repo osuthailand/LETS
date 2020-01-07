@@ -46,13 +46,12 @@ class handler(requestsManager.asyncRequestHandler):
         arguments_cheat = int(arguments_cheat)
         # Let's try found something
         cheat_id = generalHelper.getHackByFlag(arguments_cheat)
-        if glob.conf.extra["mode"]["anticheat"]:
-            if glob.conf.config["discord"]["enable"] == True:
-                webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-                if type(cheat_id) == str:
-                    webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
-                else:
-                    webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
+        if glob.conf.config["discord"]["enable"] == True:
+            webhook.set_title(title=f"Catched some cheater {username} ({userID})")
+            if type(cheat_id) == str:
+                webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
+            else:
+                webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
 
         if glob.conf.extra["mode"]["anticheat"]:
             webhook.post()
