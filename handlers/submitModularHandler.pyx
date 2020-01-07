@@ -59,8 +59,12 @@ class handler(requestsManager.asyncRequestHandler):
 				requestsManager.printArguments(self)
 
 			# Check arguments
-			if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
-				raise exceptions.invalidArgumentsException(MODULE_NAME)
+			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
+					raise exceptions.invalidArgumentsException(MODULE_NAME)
+			else:
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
+					raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
 
