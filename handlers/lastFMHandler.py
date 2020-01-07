@@ -18,9 +18,10 @@ class handler(requestsManager.asyncRequestHandler):
     @tornado.web.asynchronous
     @tornado.gen.engine
     def asyncGet(self):
-        webhook = Webhook(glob.conf.config["discord"]["ahook"],
-                  color=0xadd8e6,
-                  footer="Man... this is worst player.")
+        if glob.conf.config["discord"]["enable"] == True:
+            webhook = Webhook(glob.conf.config["discord"]["ahook"],
+                      color=0xadd8e6,
+                      footer="Man... this is worst player.")
 
         ip = self.getRequestIP()
         if not requestsManager.checkArguments(self.request.arguments, ["b", "ha", "us"]):
@@ -45,18 +46,14 @@ class handler(requestsManager.asyncRequestHandler):
         arguments_cheat = int(arguments_cheat)
         # Let's try found something
         cheat_id = generalHelper.getHackByFlag(arguments_cheat)
-        webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-        if glob.conf.extra["mode"]["anticheat"]:
+        if glob.conf.config["discord"]["enable"] == True:
+            webhook.set_title(title=f"Catched some cheater {username} ({userID})")
             if type(cheat_id) == str:
                 webhook.set_desc(f'This body catched with flag {arguments_cheat}\nIn enuming: {cheat_id}')
             else:
                 webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
 
-        webhook.post()
-        # Ask cheater to leave game(no i just kill him client ;d)
         if glob.conf.extra["mode"]["anticheat"]:
-            glob.redis.publish("ainu:hqosu", userID)
-        elif not glob.conf.extra["mode"]["anticheat"]:
-            return self.write("-3")
+            webhook.post()
 
         return self.write("-3")
