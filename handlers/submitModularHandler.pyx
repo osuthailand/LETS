@@ -73,7 +73,11 @@ class handler(requestsManager.asyncRequestHandler):
 			iv = self.get_argument("iv")
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
-			quit_ = self.get_argument("x") == "1"
+			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
+				quit_ = 0
+			else:
+				quit_ = self.get_argument("x") == "1"
+
 			try:
 				failTime = max(0, int(self.get_argument("ft", 0)))
 			except ValueError:
