@@ -74,7 +74,7 @@ class handler(requestsManager.asyncRequestHandler):
 			password = self.get_argument("pass")
 			ip = self.getRequestIP()
 			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
-				quit_ = 1
+				quit_ = 0
 			else:
 				quit_ = self.get_argument("x") == "1"
 			try:
