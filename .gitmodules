@@ -9,7 +9,7 @@
 	url = https://github.com/Francesco149/oppai-ng.git
 [submodule "pp/oppai-rx"]
 	path = pp/oppai-rx
-	url = https://github.com/osuAkatsuki/akatsuki-pp-relax.git
+	url = https://github.com/osuthailand/ainu-rx-calc.git
 [submodule "pp/catch_the_pp"]
 	path = pp/catch_the_pp
 	url = https://github.com/osuthailand/catch-the-pp.git
