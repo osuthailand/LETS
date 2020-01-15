@@ -8,13 +8,9 @@ import objects.glob
 
 
 class beatmap:
-	__slots__ = ["songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
+	__slots__ = ("songName", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
 	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "maxCombo", "hitLength",
-<<<<<<< HEAD
-	             "bpm", "rankingDate", "playcount" ,"passcount", "refresh"]
-=======
-	             "bpm", "playcount" ,"passcount", "refresh", "disablePP", "fileName")
->>>>>>> 14adccf... Store .osu file names
+	             "bpm", "rankingDate", "playcount" ,"passcount", "refresh", "fileName")
 
 	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False, fileName=None):
 		"""
@@ -85,15 +81,14 @@ class beatmap:
 
 		# Add new beatmap data
 		log.debug("Saving beatmap data in db...")
-<<<<<<< HEAD
+		"""
 		objects.glob.db.execute(
 			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
 			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
 			"`max_combo`, `hit_length`, `bpm`, `ranked`, `latest_update`, `ranked_status_freezed`) "
 			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", (
-=======
+		"""
 		params = [
->>>>>>> 14adccf... Store .osu file names
 			self.beatmapID,
 			self.beatmapSetID,
 			self.fileMD5,
@@ -109,12 +104,8 @@ class beatmap:
 			self.bpm,
 			self.rankedStatus if frozen == 0 else 2,
 			int(time.time()),
-<<<<<<< HEAD
 			frozen
-		))
-=======
-			frozen,
-			self.disablePP
+		#)
 		]
 		if self.fileName is not None:
 			params.append(self.fileName)
@@ -122,8 +113,8 @@ class beatmap:
 			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
 			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
 			"`max_combo`, `hit_length`, `bpm`, `ranked`, "
-			"`latest_update`, `ranked_status_freezed`, `disable_pp`{extra_q}) "
-			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s{extra_p})".format(
+			"`latest_update`, `ranked_status_freezed`{extra_q}) "
+			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s{extra_p})".format(
 				extra_q=", `file_name`" if self.fileName is not None else "",
 				extra_p=", %s" if self.fileName is not None else "",
 			), params
@@ -139,7 +130,6 @@ class beatmap:
 				"UPDATE beatmaps SET file_name = %s WHERE beatmap_md5 = %s LIMIT 1",
 				(self.fileName, self.fileMD5)
 			)
->>>>>>> 14adccf... Store .osu file names
 
 	def setDataFromDB(self, md5):
 		"""
