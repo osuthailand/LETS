@@ -246,7 +246,7 @@ class handler(requestsManager.asyncRequestHandler):
 				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
 				if oldPersonalBestRank == 0:
 					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-					oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False) if UsingRelax else scoreboard.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
+					oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False) if UsingRelax else scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
 					oldScoreboard.setPersonalBestRank()
 					oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
 				oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank) if UsingRelax else score.score(s.oldPersonalBest, oldPersonalBestRank)
