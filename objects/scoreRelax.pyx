@@ -338,7 +338,7 @@ class score:
 				self.pp = 0
 			
 			# Normal score
-			elif b.rankedStatus >= rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
+			elif b.rankedStatus == rankedStatuses.RANKED and b.rankedStatus != rankedStatuses.UNKNOWN \
 				and scoreUtils.isRankable(self.mods) and self.gameMode in score.PP_CALCULATORS:
 				calculator = score.PP_CALCULATORS[self.gameMode](b, self)
 				self.pp = calculator.pp
