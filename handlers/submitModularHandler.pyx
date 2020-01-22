@@ -474,15 +474,16 @@ class handler(requestsManager.asyncRequestHandler):
 				# Get personal best after submitting the score
 				if UsingRelax:
 					newScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
-					newScoreboard.setPersonalBestRank()
-					personalBestID = newScoreboard.getPersonalBest()
-					assert personalBestID is not None
-					currentPersonalBest = scoreRelax.score(personalBestID, newScoreboard.personalBestRank)
 				else:
 					newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
-					newScoreboard.setPersonalBestRank()
-					personalBestID = newScoreboard.getPersonalBest()
-					assert personalBestID is not None
+
+				newScoreboard.setPersonalBestRank()
+				personalBestID = newScoreboard.getPersonalBest()
+				assert personalBestID is not None
+					
+				if UsingRelax:
+					currentPersonalBest = scoreRelax.score(personalBestID, newScoreboard.personalBestRank)
+				else:
 					currentPersonalBest = score.score(personalBestID, newScoreboard.personalBestRank)
 
 				# Get rank info (current rank, pp/score to next rank, user who is 1 rank above us)

@@ -295,35 +295,13 @@ class score:
 					self.calculatePP()
 					# Compare personal best's score with current score
 					if b.rankedStatus in [rankedStatuses.RANKED, rankedStatuses.APPROVED, rankedStatuses.QUALIFIED]:
-						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-							# New best score
-							self.completed = 3
-							self.rankedScoreIncrease = self.score-personalBest["score"]
-							self.oldPersonalBest = personalBest["id"]
-						else:
-							self.completed = 2
-							self.rankedScoreIncrease = 0
-							self.oldPersonalBest = 0
+						self.rankedScoreIncrease = self.score-personalBest["score"]
+						self.oldPersonalBest = personalBest["id"]
+						self.completed = 3 if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]] else 2
 					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-						if self.score > personalBest["score"]:
-							# New best score
-							self.completed = 3
-							self.rankedScoreIncrease = self.score-personalBest["score"]
-							self.oldPersonalBest = personalBest["id"]
-						else:
-							self.completed = 2
-							self.rankedScoreIncrease = 0
-							self.oldPersonalBest = 0
-					elif not glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-							# New best score
-							self.completed = 3
-							self.rankedScoreIncrease = self.score-personalBest["score"]
-							self.oldPersonalBest = personalBest["id"]
-						else:
-							self.completed = 2
-							self.rankedScoreIncrease = 0
-							self.oldPersonalBest = 0
+						self.rankedScoreIncrease = self.score-personalBest["score"]
+						self.oldPersonalBest = personalBest["id"]
+						self.completed = 3 if self.score > personalBest["score"] else 2
 			elif self.quit:
 				self.completed = 0
 			elif self.failed:
