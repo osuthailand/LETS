@@ -252,7 +252,7 @@ class score:
 			self.date
 		)
 
-	def setCompletedStatus(self, b = None):
+	def setCompletedStatus(self):
 		"""
 		Set this score completed status and rankedScoreIncrease
 		"""
@@ -260,19 +260,20 @@ class score:
 			self.completed = 0
 			
 			# Create beatmap object
-			if b is None:
-				b = beatmap.beatmap(self.fileMd5, 0)
-				
+			b = beatmap.beatmap(self.fileMd5, 0)
+			
+			"""
 			if not scoreUtils.isRankable(self.mods):
 				return
-			
-			if self.passed:
+			"""
+
+			if self.passed and scoreUtils.isRankable(self.mods):
 				# Get userID
 				userID = userUtils.getID(self.playerName)
 
 				# Make sure we don't have another score identical to this one
 				# TODO: time check
-				duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
+				duplicate = glob.db.fetch("SELECT id FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
 				if duplicate is not None:
 					# Found same score in db. Don't save this score.
 					self.completed = -1
@@ -280,7 +281,7 @@ class score:
 
 				# No duplicates found.
 				# Get right "completed" value
-				personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
+				personalBest = glob.db.fetch("SELECT id,{}score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
 						glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
 					),
 					[userID, self.fileMd5, self.gameMode])
@@ -293,16 +294,41 @@ class score:
 				else:
 					# Set old personal best and calculates PP
 					self.personalOldBestScore = personalBest["id"]
-					self.calculatePP()
 					# Compare personal best's score with current score
 					if b.rankedStatus in [rankedStatuses.RANKED, rankedStatuses.APPROVED, rankedStatuses.QUALIFIED]:
-						self.rankedScoreIncrease = self.score-personalBest["score"]
-						self.oldPersonalBest = personalBest["id"]
-						self.completed = 3 if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]] else 2
+						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+							# Calculates PP
+							self.calculatePP()
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-						self.rankedScoreIncrease = self.score-personalBest["score"]
-						self.oldPersonalBest = personalBest["id"]
-						self.completed = 3 if self.score > personalBest["score"] else 2
+						if self.score > personalBest["score"]:
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
+					elif not glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
+							# Calculates PP
+							self.calculatePP()
+							# New best score
+							self.completed = 3
+							self.rankedScoreIncrease = self.score-personalBest["score"]
+							self.oldPersonalBest = personalBest["id"]
+						else:
+							self.completed = 2
+							self.rankedScoreIncrease = 0
+							self.oldPersonalBest = 0
 			elif self.quit:
 				self.completed = 0
 			elif self.failed:
