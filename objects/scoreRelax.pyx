@@ -293,7 +293,7 @@ class score:
 						self.completed = 3
 						self.rankedScoreIncrease = self.score-personalBest["score"]
 						self.oldPersonalBest = personalBest["id"]
-					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+					elif b.rankedStatus == rankedStatuses.LOVED:
 						if self.score > personalBest["score"]:
 							# New best score
 							self.completed = 3
@@ -334,7 +334,7 @@ class score:
 		# Calculate pp
 		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
 			# Loved map check
-			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+			if b.rankedStatus == rankedStatuses.LOVED:
 				self.pp = 0
 			
 			# Normal score

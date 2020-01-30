@@ -257,7 +257,7 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			if not restricted:
 				# Checking for client ac flags
-				haxFlags = scoreData[17].count(' ') # 4 is normal, 0 is irregular but inconsistent.
+				haxFlags = scoreData[17].count('') # 4 is normal, 0 is irregular but inconsistent.
 				if haxFlags != 4 and haxFlags != 0 and s.completed > 1 and s.pp > 100:
 					hack = getHackByFlag(int(haxFlags))
 					if type(hack) == str:
@@ -522,18 +522,85 @@ class handler(requestsManager.asyncRequestHandler):
 				log.debug("Generated output for online ranking screen!")
 				log.debug(output)
 
+				# send scoreposts to discord via webhook
+				if s.completed == 3 and not restricted:
+					webhookurl = glob.conf.config["discord"]["hook_scores"]
+					if UsingRelax:
+						webhookurl = glob.conf.config["discord"]["hook_scores_relax"]
+
+					pprounded = round(s.pp)
+					webhook = Webhook(webhookurl, color=0xC9BFFF)
+					webhook.set_title(title=f"**[{gameModes.getGamemodeFull(s.gameMode)}]** New Score by {username} __**({pprounded}pp)**__")
+					webhook.add_field(name='Map', value=f'[{beatmapInfo.songName}](https://lemres.de/b/{beatmapInfo.beatmapID})')
+					webhook.add_field(name='Player', value=f'[{username}](https://lemres.de/u/{userID})')
+					webhook.set_thumbnail(f'https://a.lemres.de/{userID}')
+					webhook.set_image(f'https://assets.ppy.sh/beatmaps/{beatmapInfo.beatmapSetID}/covers/cover.jpg')
+					webhook.post()
+
+
+				# send ppposts to discord (tournament)
+			#	player_one = glob.conf.config ["discord"] ["tournament_player_one"]
+			#	player_two = glob.conf.config ["discord"] ["tournament_player_two"]
+			#	if s.completed == 3 and userID == player_one or player_two:
+			#		webhookurl = glob.conf.config["discord"]["hook_tournament"]
+				
+			#	pprounded = round(s.pp)
+			#	webhook = Webhook(webhookurl, color= 0xC9BFFF)
+			#	webhook.set_title(title=f"**{username}** got **{pprounded}pp**")
+			#	webhook.set_thumbnail(f'https://a.lemres.de/{userID}')
+			#	webhook.post()
+
+
+
+			#send scoreposts (privat)
+
+			if s.completed == 3 and userID == 1001 or userID == 1003:
+				webhookurl = glob.conf.config ["discord"] ["hook_alone"]
+				typeForAnnounce = "Vanilla"
+				if UsingRelax:
+					typeForAnnounce = "Relax"
+					webhookurl = glob.conf.config ["discord"] ["hook_alone"]
+
+					playedmods = (s.mods)
+					if s.mods == 200:
+					playedmods = Relax, DoubleTime, Hidden
+
+					pprounded = round(s.pp)
+					webhook = Webhook(webhookurl, color=0xC9BFFF)
+					webhook.set_title(title=f"**[{gameModes.getGamemodeFull(s.gameMode)}]** New Score by {username} __**({pprounded}pp)**__")
+					webhook.add_field(name='Map', value=f'[{beatmapInfo.songName}](https://lemres.de/b/{beatmapInfo.beatmapID})')
+					webhook.add_field(name='Mode', value=f'{typeForAnnounce}')
+					webhook.add_field(name= 'Mods', value=f'{playedmods}')
+					webhook.set_thumbnail(f'https://a.lemres.de/{userID}')
+					webhook.set_image(f'https://assets.ppy.sh/beatmaps/{beatmapInfo.beatmapSetID}/covers/cover.jpg')
+					webhook.post()
 
 				# send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[{}] [{}/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-						glob.conf.config["server"]["serverurl"],
-						"RELAX" if UsingRelax else "VANILLA",
-						userID,
-						username.encode().decode("ASCII", "ignore"),
-						beatmapInfo.beatmapID,
-						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
-						gameModes.getGamemodeFull(s.gameMode)
-							)
+					webhookurl = glob.conf.config["discord"]["hook_rank_one"]
+					typeForAnnounce = "Vanilla"
+					if UsingRelax:
+						typeForAnnounce = "Relax"
+						webhookurl = glob.conf.config["discord"]["hook_rank_one"]
+
+					pprounded = round(s.pp)
+					webhook = Webhook(webhookurl, color= 0xC9BFFF)
+					webhook.set_title(title=f"[**{typeForAnnounce}**] {username} got #1 on **{gameModes.getGamemodeFull(s.gameMode)}** with __**{pprounded}pp**__")
+					webhook.add_field(name='Map', value=f'[{beatmapInfo.songName}](https://lemres.de/b/{beatmapInfo.beatmapID})')
+					webhook.add_field(name='Player', value=f'[{username}](https://lemres.de/u/{userID})')
+					webhook.set_thumbnail(f'https://a.lemres.de/{userID}')
+					webhook.set_image(f'https://assets.ppy.sh/beatmaps/{beatmapInfo.beatmapSetID}/covers/cover.jpg')
+					webhook.post()
+
+					annmsg = "[{}] [https://lemres.de/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({}) {}pp".format(
+					typeForAnnounce,
+					userID,
+					username.encode().decode("ASCII", "ignore"),
+					beatmapInfo.beatmapID,
+					beatmapInfo.songName.encode().decode("ASCII", "ignore"),
+					gameModes.getGamemodeFull(s.gameMode),
+					round(s.pp)
+					)
 								
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))

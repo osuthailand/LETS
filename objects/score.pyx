@@ -332,7 +332,7 @@ class score:
 		# Calculate pp
 		if b.is_rankable and scoreUtils.isRankable(self.mods) and self.passed:
 			# Loved map check
-			if glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+			if b.rankedStatus == rankedStatuses.LOVED:
 				self.pp = 0
 			
 			# Normal score
