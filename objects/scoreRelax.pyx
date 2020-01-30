@@ -280,7 +280,10 @@ class score:
 
 				# No duplicates found.
 				# Get right "completed" value
-				personalBest = glob.db.fetch("SELECT id,{}score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
+				if b.rankedStatus == rankedStatuses.LOVED and glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
+					personalBest = glob.db.fetch("SELECT id, score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
+				else:
+					personalBest = glob.db.fetch("SELECT id,{}score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
 						glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
 					),
 					[userID, self.fileMd5, self.gameMode])
@@ -291,13 +294,13 @@ class score:
 					self.oldPersonalBest = 0
 					self.personalOldBestScore = None
 				else:
-					# Set old personal best and calculates PP
+					# Set old personal best
 					self.personalOldBestScore = personalBest["id"]
 					# Compare personal best's score with current score
 					if b.rankedStatus in [rankedStatuses.RANKED, rankedStatuses.APPROVED, rankedStatuses.QUALIFIED]:
+						# Calculates PP
+						self.calculatePP()
 						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-							# Calculates PP
-							self.calculatePP()
 							# New best score
 							self.completed = 3
 							self.rankedScoreIncrease = self.score-personalBest["score"]
@@ -306,9 +309,8 @@ class score:
 							self.completed = 2
 							self.rankedScoreIncrease = 0
 							self.oldPersonalBest = 0
-					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+					elif b.rankedStatus == rankedStatuses.LOVED and glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
 						if self.score > personalBest["score"]:
-							personalBest = glob.db.fetch("SELECT id, score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
 							# New best score
 							self.completed = 3
 							self.rankedScoreIncrease = self.score-personalBest["score"]
@@ -317,10 +319,10 @@ class score:
 							self.completed = 2
 							self.rankedScoreIncrease = 0
 							self.oldPersonalBest = 0
-					elif not glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
+					elif b.rankedStatus == rankedStatuses.LOVED and not glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
+						# Calculates PP
+						self.calculatePP()
 						if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]]:
-							# Calculates PP
-							self.calculatePP()
 							# New best score
 							self.completed = 3
 							self.rankedScoreIncrease = self.score-personalBest["score"]

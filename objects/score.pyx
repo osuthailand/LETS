@@ -278,7 +278,10 @@ class score:
 				
 				# No duplicates found.
 				# Get right "completed" value
-				personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
+				if b.rankedStatus == rankedStatuses.LOVED and glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
+					personalBest = glob.db.fetch("SELECT id, score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
+				else:
+					personalBest = glob.db.fetch("SELECT id,{}score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
 						glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
 					),
 					[userID, self.fileMd5, self.gameMode])
@@ -298,7 +301,6 @@ class score:
 						self.oldPersonalBest = personalBest["id"]
 						self.completed = 3 if getattr(self, glob.conf.extra["lets"]["submit"]["score-overwrite"]) > personalBest[glob.conf.extra["lets"]["submit"]["score-overwrite"]] else 2
 					elif glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"] and b.rankedStatus == rankedStatuses.LOVED:
-						personalBest = glob.db.fetch("SELECT id, score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
 						self.rankedScoreIncrease = self.score-personalBest["score"]
 						self.oldPersonalBest = personalBest["id"]
 						self.completed = 3 if self.score > personalBest["score"] else 2
