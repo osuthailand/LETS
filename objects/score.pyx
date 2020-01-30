@@ -279,9 +279,9 @@ class score:
 				# No duplicates found.
 				# Get right "completed" value
 				if b.rankedStatus == rankedStatuses.LOVED and glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
-					personalBest = glob.db.fetch("SELECT id, score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
+					personalBest = glob.db.fetch("SELECT id, score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1", [userID, self.fileMd5, self.gameMode])
 				else:
-					personalBest = glob.db.fetch("SELECT id,{}score FROM scores_relax WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
+					personalBest = glob.db.fetch("SELECT id,{}score FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND completed = 3 LIMIT 1".format(
 						glob.conf.extra["lets"]["submit"]["score-overwrite"] == "score" and " " or " {}, ".format(glob.conf.extra["lets"]["submit"]["score-overwrite"])
 					),
 					[userID, self.fileMd5, self.gameMode])
