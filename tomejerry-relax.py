@@ -11,7 +11,6 @@ import os
 import threading
 import time
 import json
-import shutil
 
 import MySQLdb.cursors
 import progressbar
