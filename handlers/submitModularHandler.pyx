@@ -243,7 +243,7 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			# Right before submitting the score, get the personal best score object (we need it for charts)
 			if s.passed and s.oldPersonalBest > 0:
-				oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
+				oldPersonalBestRank = glob.personalBestCacheRX.get(userID, s.fileMd5) if UsingRelax else glob.personalBestCache.get(userID, s.fileMd5)
 				if oldPersonalBestRank == 0:
 					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
 					oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False) if UsingRelax else scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
@@ -394,12 +394,8 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
-				if UsingRelax:
-					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-					oldRank = userUtils.getGameRankRx(userID, s.gameMode)
-				else:
-					oldUserStats = glob.userStatsCache.get(userID, s.gameMode)
-					oldRank = userUtils.getGameRank(userID, s.gameMode) 
+				oldUserStats = glob.userStatsCacheRX.get(userID, s.gameMode) if UsingRelax else glob.userStatsCache.get(userID, s.gameMode)
+				oldRank = userUtils.getGameRankRx(userID, s.gameMode) if UsingRelax else userUtils.getGameRank(userID, s.gameMode) 
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
@@ -422,7 +418,7 @@ class handler(requestsManager.asyncRequestHandler):
 				# Get new stats
 				if UsingRelax:
 					newUserStats = userUtils.getUserStatsRx(userID, s.gameMode)
-					glob.userStatsCache.update(userID, s.gameMode, newUserStats)
+					glob.userStatsCacheRX.update(userID, s.gameMode, newUserStats)
 					leaderboardHelperRelax.update(userID, newUserStats["pp"], s.gameMode)
 					maxCombo = userUtils.getMaxComboRX(userID, s.gameMode)
 				else:
@@ -617,12 +613,12 @@ class handler(requestsManager.asyncRequestHandler):
 							url = glob.conf.config["discord"]["score"]
 
 					# Then post them!
-					webhook = Webhook(url, color=0xadd836, footer="This score is submitted in osu!Ainu")
+					webhook = Webhook(url, color=0xadd8e6, footer="This score is submitted on osu!Ainu")
 					webhook.set_author(name=username.encode().decode("ASCII", "ignore"), icon='https://a.ainu.pw/{}'.format(userID))
-					webhook.set_title(title=f"New score by {username}!")
+					webhook.set_title(title=f"New score by [{username}](https://ainu.pw/u/{userID})!")
 					webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
 					webhook.add_field(name='Total: {}pp'.format(float("{0:.2f}".format(s.pp))), value='Gained: +{}pp'.format(float("{0:.2f}".format(ppGained))))
-					webhook.add_field(name='Actual rank: {}'.format(rankInfo["currentRank"]), value='[Download Link](http://storage.ainu.pw/d/{})'.format(beatmapInfo.beatmapSetID))
+					webhook.add_field(name='Actual rank: {}'.format(rankInfo["currentRank"]), value='[Download Link](https://storage.ainu.pw/d/{})'.format(beatmapInfo.beatmapSetID))
 					webhook.set_image('https://assets.ppy.sh/beatmaps/{}/covers/cover.jpg'.format(beatmapInfo.beatmapSetID))
 					webhook.post()
 
