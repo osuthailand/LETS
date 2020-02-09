@@ -564,9 +564,10 @@ class handler(requestsManager.asyncRequestHandler):
 
 				# Send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
-					annmsg = "[{}] [{}/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
+					annmsg = "[{}] [{}/{}u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
 						"RELAX" if UsingRelax else "VANILLA",
 						glob.conf.config["server"]["serverurl"],
+						"rx/" if UsingRelax else "",
 						userID,
 						username.encode().decode("ASCII", "ignore"),
 						beatmapInfo.beatmapID,
@@ -619,7 +620,7 @@ class handler(requestsManager.asyncRequestHandler):
 					webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
 					webhook.add_field(name='Total: {}pp'.format(float("{0:.2f}".format(s.pp))), value='Gained: +{}pp'.format(float("{0:.2f}".format(ppGained))))
 					webhook.add_field(name='Actual rank: {}'.format(rankInfo["currentRank"]), value='[Download Link](https://storage.ainu.pw/d/{})'.format(beatmapInfo.beatmapSetID))
-					webhook.add_field(name='Played by: {}'.format(username.encode().decode("ASCII", "ignore")), value=f"[Go to user's profile](https://ainu.pw/u/{userID})")
+					webhook.add_field(name='Played by: {}'.format(username.encode().decode("ASCII", "ignore")), value="[Go to user's profile](https://ainu.pw/{}u/{})".format("rx/" if UsingRelax else "", userID))
 					webhook.set_image('https://assets.ppy.sh/beatmaps/{}/covers/cover.jpg'.format(beatmapInfo.beatmapSetID))
 					webhook.post()
 
