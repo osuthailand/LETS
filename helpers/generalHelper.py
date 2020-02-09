@@ -30,7 +30,7 @@ def setUserSession(userID: int, sessionObj: dict):
     Commit ID: cad58ed96f52847c8b89b066586b9f3a8c4d4920
     '''
     glob.db.execute("UPDATE users SET last_session = %s WHERE userID = %s", [
-                    json.dumps(sessionObj), userID])
+    json.dumps(sessionObj), userID])
     return True
 
 cheat_ids = {

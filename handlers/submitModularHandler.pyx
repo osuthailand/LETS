@@ -262,23 +262,23 @@ class handler(requestsManager.asyncRequestHandler):
 			log.debug("Resetting score lock key {}".format(lock_key))
 			glob.redis.delete(lock_key)
 			
+			# Client anti-cheat flags
 			if not restricted and glob.conf.extra["mode"]["anticheat"]:
-				# Checking for client ac flags
 				haxFlags = scoreData[17].count(' ') # 4 is normal, 0 is irregular but inconsistent.
-				if haxFlags != 4 and haxFlags != 0 and s.completed > 1 and s.pp > 100:
+				if haxFlags != 4 and haxFlags != 0 and s.passed:
 					hack = getHackByFlag(int(haxFlags))
 					if type(hack) == str:
-						# okay we found some cheater
-						webhook = Webhook(glob.conf.config["discord"]["ahook"],
-										  color=0xc32c74,
-										  footer="This player is such a shame, bro.")
+						# THOT DETECTED
+						if glob.conf.config["discord"]["enable"]:
+							webhook = Webhook(glob.conf.config["discord"]["ahook"],
+											  color=0xadd836,
+											  footer="Man... this is worst player. [ Client AC ]")
+							webhook.set_title(title=f"Catched some cheater {username} ({userID})")
+							webhook.set_desc(f'This body catched with flag {haxFlags}\nIn enuming: {hack}')
+							webhook.post()
 
-						webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-						webhook.set_desc(f'This body catched with flag {haxFlags}\nIn enuming: {hack}')
-						webhook.post()
-
-			# Client anti-cheat flags
-			'''ignoreFlags = 4
+			'''
+			ignoreFlags = 4
 			if glob.debug:
 				# ignore multiple client flags if we are in debug mode
 				ignoreFlags |= 8
@@ -286,13 +286,14 @@ class handler(requestsManager.asyncRequestHandler):
 			if haxFlags != 0 and not restricted:
 				userHelper.restrict(userID)
 				userHelper.appendNotes(userID, "-- Restricted due to clientside anti cheat flag ({}) (cheated score id: {})".format(haxFlags, s.scoreID))
-				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")'''
+				log.warning("**{}** ({}) has been restricted due clientside anti cheat flag **({})**".format(username, userID, haxFlags), "cm")
+			'''
 
 			# สวัสดีฮะ ผมเต้เอ็กเซนไฟไหม้
-			if s.score < 0 or s.score > (2 ** 63) - 1 or s.score == 2147483647 and glob.conf.extra["mode"]["anticheat"]:
+			if s.score < 0 or s.score > (2 ** 63) - 1 and glob.conf.extra["mode"]["anticheat"]:
 				userUtils.ban(userID)
 				userUtils.appendNotes(userID, "Banned due to negative score (score submitter)")
-			elif s.score < 0 or s.score > (2 ** 63) - 1 or s.score == 2147483647 and not glob.conf.extra["mode"]["anticheat"]:
+			elif s.score < 0 or s.score > (2 ** 63) - 1 and not glob.conf.extra["mode"]["anticheat"]:
 				alert = "{}, seems like you've exceed the score limit (INT32) or your score is negative, this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
 				params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": username.encode().decode("ASCII", "ignore"), "msg": alert})
 				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
@@ -423,7 +424,7 @@ class handler(requestsManager.asyncRequestHandler):
 					newUserStats = userUtils.getUserStatsRx(userID, s.gameMode)
 					glob.userStatsCache.update(userID, s.gameMode, newUserStats)
 					leaderboardHelperRelax.update(userID, newUserStats["pp"], s.gameMode)
-					maxCombo = 0
+					maxCombo = userUtils.getMaxComboRX(userID, s.gameMode)
 				else:
 					newUserStats = userUtils.getUserStats(userID, s.gameMode)
 					glob.userStatsCache.update(userID, s.gameMode, newUserStats)
@@ -454,6 +455,7 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Score submission and stats update done
 			log.debug("Score submission and user stats update done!")
+			oldStats = userUtils.getUserStats(userID, s.gameMode)
 
 			# Score has been submitted, do not retry sending the score if
 			# there are exceptions while building the ranking panel
@@ -550,8 +552,21 @@ class handler(requestsManager.asyncRequestHandler):
 				log.debug("Generated output for online ranking screen!")
 				log.debug(output)
 
+				# How many PP you got and did you gain any ranks?
+				ppGained = newUserStats["pp"] - oldUserStats["pp"]
+				gainedRanks = oldRank - rankInfo["currentRank"]
 
-				# send message to #announce if we're rank #1
+				# Get info about score if they passed the map (Ranked)
+				userStats = userUtils.getUserStats(userID, s.gameMode)
+				if s.completed == 3 and not restricted and beatmapInfo.rankedStatus >= rankedStatuses.RANKED and s.pp > 0:
+					glob.redis.publish("scores:new_score", json.dumps({
+						"gm":s.gameMode,
+						"user":{"username":username, "userID": userID, "rank":newUserStats["gameRank"],"oldaccuracy":oldStats["accuracy"],"accuracy":newUserStats["accuracy"], "oldpp":oldStats["pp"],"pp":newUserStats["pp"]},
+						"score":{"scoreID": s.scoreID, "mods":s.mods, "accuracy":s.accuracy, "missess":s.cMiss, "combo":s.maxCombo, "pp":s.pp, "rank":newScoreboard.personalBestRank, "ranking":s.rank},
+						"beatmap":{"beatmapID": beatmapInfo.beatmapID, "beatmapSetID": beatmapInfo.beatmapSetID, "max_combo":beatmapInfo.maxCombo, "song_name":beatmapInfo.songName}
+						}))
+
+				# Send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
 					annmsg = "[{}] [{}/u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
 						"RELAX" if UsingRelax else "VANILLA",
@@ -561,18 +576,56 @@ class handler(requestsManager.asyncRequestHandler):
 						beatmapInfo.beatmapID,
 						beatmapInfo.songName.encode().decode("ASCII", "ignore"),
 						gameModes.getGamemodeFull(s.gameMode)
-							)
+						)
 								
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 
-				if UsingRelax:
-					server = "Relax"
-				else:
-					server = "Vanilla"
-					
-				ppGained = newUserStats["pp"] - oldUserStats["pp"]
-				gainedRanks = oldRank - rankInfo["currentRank"]
+					# Let's send them to Discord too, because we cool :sunglasses:
+					# First, let's check what mod does the play have
+					ScoreMods = ""
+					if s.mods == 0:
+						ScoreMods += "NM"
+					if s.mods & mods.NOFAIL > 0:
+						ScoreMods += "NF"
+					if s.mods & mods.EASY > 0:
+						ScoreMods += "EZ"
+					if s.mods & mods.HIDDEN > 0:
+						ScoreMods += "HD"
+					if s.mods & mods.HARDROCK > 0:
+						ScoreMods += "HR"
+					if s.mods & mods.DOUBLETIME > 0:
+						ScoreMods += "DT"
+					if s.mods & mods.HALFTIME > 0:
+						ScoreMods += "HT"
+					if s.mods & mods.FLASHLIGHT > 0:
+						ScoreMods += "FL"
+					if s.mods & mods.SPUNOUT > 0:
+						ScoreMods += "SO"
+					if s.mods & mods.TOUCHSCREEN > 0:
+						ScoreMods += "TD"
+					if s.mods & mods.RELAX > 0:
+						ScoreMods += "RX"
+					if s.mods & mods.RELAX2 > 0:
+						ScoreMods += "AP"
+
+					# Second, get the webhook link from config
+					if glob.conf.config["discord"]["enable"]:
+						if UsingRelax:
+							url = glob.conf.config["discord"]["rxscore"]
+						else:
+							url = glob.conf.config["discord"]["score"]
+
+					# Then post them!
+					webhook = Webhook(url, color=0xadd836, footer="This score is submitted in osu!Ainu")
+					webhook.set_author(name=username.encode().decode("ASCII", "ignore"), icon='https://a.ainu.pw/{}'.format(userID))
+					webhook.set_title(title=f"New score by {username}!")
+					webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
+					webhook.add_field(name='Total: {}pp'.format(float("{0:.2f}".format(s.pp))), value='Gained: +{}pp'.format(float("{0:.2f}".format(ppGained))))
+					webhook.add_field(name='Actual rank: {}'.format(rankInfo["currentRank"]), value='[Download Link](http://storage.ainu.pw/d/{})'.format(beatmapInfo.beatmapSetID))
+					webhook.set_image('https://assets.ppy.sh/beatmaps/{}/covers/cover.jpg'.format(beatmapInfo.beatmapSetID))
+					webhook.post()
+
 				# Write message to client
 				self.write(output)
 			else:
