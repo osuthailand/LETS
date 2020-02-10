@@ -614,7 +614,7 @@ class handler(requestsManager.asyncRequestHandler):
 							url = glob.conf.config["discord"]["score"]
 
 					# Then post them!
-					webhook = Webhook(url, color=0xadd8e6, footer="This score is submitted on osu!Ainu")
+					webhook = Webhook(url, color=0xadd8e6, footer="This score was submitted on osu!Ainu")
 					webhook.set_author(name=username.encode().decode("ASCII", "ignore"), icon='https://a.ainu.pw/{}'.format(userID))
 					webhook.set_title(title=f"New score by {username}!")
 					webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
