@@ -13,7 +13,7 @@ This server handles every non real time client feature, so:
 - osu!direct, thanks to [cheesegull](https://github.com/osuripple/cheesegull)
 - Tillerino-like API (partially broken)
 - osu!standard and taiko pp calculation with [oppai-ng](https://github.com/francesco149/oppai-ng), made by Franc[e]sco
-- osu!standard relax pp calculation with [akatsuki-pp-relax](https://github.com/osuAkatsuki/akatsuki-pp-relax), made by Franc[e]sco and edited by cmyui
+- osu!standard relax pp calculation with [ainu-rx-calc](https://github.com/osuthailand/ainu-rx-calc), made by Franc[e]sco and edited by Hazuki-san
 - osu!mania pp calculation with `wifipiano2`, made by Nyo with reference code from [Tom94's osu-performance](https://github.com/ppy/osu-performance)
 - catch the beat pp calculation with [catch-the-pp](https://github.com/osuripple/catch-the-pp), made by Sunpy and cythonized by Nyo
 
@@ -43,7 +43,7 @@ then, run LETS once to create the default config file and edit it
 $ python3.6 lets.py
 $ nano config.ini
 ```
-finally, compile `oppai-ng` (inside pp/oppai-ng) and `akatsuki-pp-relax` (inside pp/oppai-rx) to make pp calculation working
+finally, compile `oppai-ng` (inside pp/oppai-ng) and `ainu-rx-calc` (inside pp/oppai-rx) to make pp calculation working
 ```
 $ cd ./pp/oppai-ng/ && chmod +x ./build && ./build && cd ./../../
 $ cd ./pp/oppai-rx/ && chmod +x ./build && ./build && cd ./../../
