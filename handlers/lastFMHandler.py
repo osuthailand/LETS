@@ -21,7 +21,7 @@ class handler(requestsManager.asyncRequestHandler):
         if glob.conf.config["discord"]["enable"] == True:
             webhook = Webhook(glob.conf.config["discord"]["ahook"],
                       color=0xadd8e6,
-                      footer="Man... this is worst player.")
+                      footer="Man... this is worst player. [ LastFM AC ]")
 
         ip = self.getRequestIP()
         if not requestsManager.checkArguments(self.request.arguments, ["b", "ha", "us"]):
