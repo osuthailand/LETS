@@ -76,6 +76,9 @@ class config:
 			self.config.get("osuapi", "apiurl")
 			self.config.get("osuapi", "apikey")
 
+			self.config.get("beatconnect", "enable")
+			self.config.get("beatconnect", "apikey")
+
 			self.config.get("cheesegull", "apiurl")
 
 			self.config.get("discord", "enable")
@@ -141,6 +144,10 @@ class config:
 		self.config.set("osuapi", "enable", "True")
 		self.config.set("osuapi", "apiurl", "https://osu.ppy.sh")
 		self.config.set("osuapi", "apikey", "YOUR_OSU_API_KEY_HERE")
+
+		self.config.add_section("beatconnect")
+		self.config.set("beatconnect", "enable", "False")
+		self.config.set("beatconnect", "enable", "")
 
 		self.config.add_section("cheesegull")
 		self.config.set("cheesegull", "apiurl", "http://cheesegu.ll/api")

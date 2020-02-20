@@ -28,6 +28,7 @@ from objects import glob
 MAX_WORKERS = 32
 UNIX = os.name == "posix"
 FAILED_SCORES_LOGGER = None
+LOVED_SCORES_LOGGER = None
 
 
 RecalculatorQuery = namedtuple("RecalculatorQuery", "query parameters")
@@ -199,6 +200,7 @@ class Worker:
         self.scores: List[LwScore] = self.score_ids_pool.chunk(self.chunk_size)
         self.status: WorkerStatus = WorkerStatus.NOT_STARTED
         self.failed_scores: int = 0
+        self.loved_scores: int = 0
         if start:
             self.threaded_work()
 
@@ -305,6 +307,7 @@ class Worker:
                 try:
                     # Recalculate pp
                     recalculated_score = self.recalc_score(score_)
+                    b = beatmap.beatmap
 
                     if recalculated_score is not None:
                         # New score returned, store new pp in memory
@@ -312,6 +315,9 @@ class Worker:
                         if recalculated_score.pp == 0:
                             # PP calculator error
                             self.log_failed_score(score_, "0 pp")
+                        if recalculated_score.pp == 0 and b.rankedStatus == 5:
+                            # PP calculator error
+                            self.log_loved_scores(score_, "no pp")
 
                     # Mark for garbage collection
                     del score_
@@ -387,6 +393,23 @@ class Worker:
         FAILED_SCORES_LOGGER.error(msg)
         self.failed_scores += 1
 
+    def log_loved_scores(self, score_: Dict[str, Any], additional_information: str="", traceback_: bool=False):
+        """
+        Logs a loved score.
+
+        :param score_: score dict (from db)
+        :param additional_information: additional information
+        :param traceback_: Whether the traceback should be logged or not.
+        It should be `True` if the logging was triggered by an unhandled exception
+        :return:
+        """
+        msg = ""
+        if traceback_:
+            msg = "\n\n\nUnhandled exception: {}\n{}".format(sys.exc_info(), traceback.format_exc())
+        msg += "score_id:{} ({})".format(score_["id"], additional_information).strip()
+        LOVED_SCORES_LOGGER.error(msg)
+        self.loved_scores += 1
+
 
 def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chunk_size: Optional[int]=None):
     """
@@ -412,6 +435,13 @@ def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chu
     FAILED_SCORES_LOGGER = logging.getLogger("failed_scores")
     FAILED_SCORES_LOGGER.addHandler(
         logging.FileHandler("tomejerry-relax_failed_scores_{}.log".format(time.strftime("%d-%m-%Y--%H-%M-%S")))
+    )
+
+    global LOVED_SCORES_LOGGER
+    # Set up loved scores logger (creates file too)
+    LOVED_SCORES_LOGGER = logging.getLogger("loved_scores")
+    LOVED_SCORES_LOGGER.addHandler(
+        logging.FileHandler("tomejerry-relax_loved_scores_{}.log".format(time.strftime("%d-%m-%Y--%H-%M-%S")))
     )
 
     # Get the number of total scores from the result dict
@@ -502,14 +532,17 @@ def mass_recalc(recalculator: Recalculator, workers_number: int=MAX_WORKERS, chu
     # Recalc done. Print some stats
     end_time = time.time()
     failed_scores = sum([x.failed_scores for x in workers])
+    loved_scores = sum([x.loved_scores for x in workers])
     logging.info(
         "\n\nDone!\n"
         ":: Recalculated\t{} scores\n"
         ":: Failed\t{} scores\n"
+        ":: Loved 0PP\t{} scores\n"
         ":: Total\t{} scores\n\n"
         ":: Took\t{:.2f} seconds".format(
-            total_scores - failed_scores,
+            total_scores - failed_scores + loved_scores,
             failed_scores,
+            loved_scores,
             total_scores,
             end_time - start_time
         )
