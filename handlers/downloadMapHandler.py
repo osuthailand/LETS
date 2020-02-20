@@ -31,7 +31,7 @@ class handler(requestsManager.asyncRequestHandler):
 					uniqueid = json.loads(beatmap)['unique_id']
 				url = "https://beatconnect.io/b/{}/{}{}".format(bid, uniqueid, "?novideo=1" if noVideo else "")
 			else:
-				url = "https://storage.ainu.pw/d/{}{}".format(bid, "?novideo" if noVideo else "")
+				url = "https://pisstau.be/d/{}{}".format(bid, "?novideo" if noVideo else "")
 			self.add_header("Location", url)
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
