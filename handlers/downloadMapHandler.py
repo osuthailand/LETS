@@ -3,7 +3,6 @@ import json
 
 import tornado.gen
 import tornado.web
-import re
 
 from common.web import requestsManager
 from common.sentry import sentry

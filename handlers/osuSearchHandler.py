@@ -4,10 +4,8 @@ import tornado.web
 from common.sentry import sentry
 from common.web import requestsManager
 from common.web import cheesegull
-from common.web import beatconnect
 from constants import exceptions
 from common.log import logUtils as log
-from objects import glob
 
 MODULE_NAME = "direct"
 class handler(requestsManager.asyncRequestHandler):
@@ -40,7 +38,7 @@ class handler(requestsManager.asyncRequestHandler):
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# Get data from cheesegull API
-			log.info("Requested osu!direct search: {}".format(query if query != "" else "index"))			
+			log.info("Requested osu!direct search: {}".format(query if query != "" else "index"))
 			searchData = cheesegull.getListing(rankedStatus=cheesegull.directToApiStatus(rankedStatus), page=page * 100, gameMode=gameMode, query=query)
 			if searchData is None or searchData is None:
 				raise exceptions.noAPIDataError()
