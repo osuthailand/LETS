@@ -1,4 +1,5 @@
 import os
+import datetime
 
 from common import generalUtils
 from constants import exceptions, dataTypes
@@ -68,3 +69,26 @@ def buildFullReplay(scoreID=None, scoreData=None, rawReplay=None):
 
     # Return full replay
     return fullReplay
+
+def returnReplayFileName(scoreID=None, scoreData=None):
+    if all(v is None for v in (scoreID, scoreData)) or all(v is not None for v in (scoreID, scoreData)):
+        raise AttributeError("Either scoreID or scoreData must be provided, not neither or both")
+
+    if scoreData is None:
+        scoreData = glob.db.fetch(
+            "SELECT scores_relax.*, users.username FROM scores_relax LEFT JOIN users ON scores_relax.userid = users.id "
+            "WHERE scores_relax.id = %s",
+            [scoreID]
+        )
+    else:
+        scoreID = scoreData["id"]
+    if scoreData is None or scoreID is None:
+        raise exceptions.scoreNotFoundError()
+
+    username = scoreData["username"]
+    beatmapName = glob.db.fetch("SELECT song_name FROM beatmaps WHERE beatmap_md5 = %s", [scoreData["beatmap_md5"]])
+    ticks = int(scoreData["time"])
+    date = datetime.datetime.fromtimestamp(ticks) - datetime.timedelta(microseconds = ticks/10)
+    fileName = "{} - {} ({})".format(username, beatmapName["song_name"], date.strftime("%Y-%m-%d"))
+
+    return fileName
