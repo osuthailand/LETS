@@ -87,8 +87,7 @@ def returnReplayFileName(scoreID=None, scoreData=None):
 
     username = scoreData["username"]
     beatmapName = glob.db.fetch("SELECT song_name FROM beatmaps WHERE beatmap_md5 = %s", [scoreData["beatmap_md5"]])
-    ticks = int(scoreData["time"])
-    date = datetime.datetime.fromtimestamp(ticks) - datetime.timedelta(microseconds = ticks/10)
+    date = datetime.datetime.fromtimestamp(int(scoreData["time"])) - datetime.timedelta(microseconds = int(scoreData["time"])/10)
     fileName = "{} - {} ({})".format(username, beatmapName["song_name"], date.strftime("%Y-%m-%d"))
 
     return fileName
