@@ -76,8 +76,8 @@ def returnReplayFileName(scoreID=None, scoreData=None):
 
     if scoreData is None:
         scoreData = glob.db.fetch(
-            "SELECT scores_relax.*, users.username FROM scores_relax LEFT JOIN users ON scores_relax.userid = users.id "
-            "WHERE scores_relax.id = %s",
+            "SELECT scores.*, users.username FROM scores LEFT JOIN users ON scores.userid = users.id "
+            "WHERE scores.id = %s",
             [scoreID]
         )
     else:
