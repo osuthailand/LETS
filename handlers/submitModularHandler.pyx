@@ -12,8 +12,6 @@ import tornado.gen
 import tornado.web
 
 import secret.achievements.utils
-from secret.circleparse.circleparse import replay as circleparse
-from secret.circlecore.circleguard import cacher, circleguard, comparer, enums, exceptions, investigator, loadable, loader, replay_info, result, utils
 from common import generalUtils
 from common.constants import gameModes
 from common.constants import mods
@@ -263,20 +261,21 @@ class handler(requestsManager.asyncRequestHandler):
 			# and we can perform duplicates check through MySQL
 			log.debug("Resetting score lock key {}".format(lock_key))
 			glob.redis.delete(lock_key)
-
+			
 			# Client anti-cheat flags
-			if not restricted:
+			if not restricted and glob.conf.extra["mode"]["anticheat"]:
 				haxFlags = scoreData[17].count(' ') # 4 is normal, 0 is irregular but inconsistent.
 				if haxFlags != 4 and haxFlags != 0 and s.passed:
 					hack = getHackByFlag(int(haxFlags))
 					if type(hack) == str:
 						# THOT DETECTED
-						webhook = Webhook(glob.conf.config["discord"]["ahook"],
-										  color=0xadd836,
-										  footer="Man... this is worst player. [ Client AC ]")
-						webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-						webhook.set_desc(f'This body catched with flag {haxFlags}\nIn enuming: {hack}')
-						webhook.post()
+						if glob.conf.config["discord"]["enable"]:
+							webhook = Webhook(glob.conf.config["discord"]["ahook"],
+											  color=0xadd836,
+											  footer="Man... this is worst player. [ Client AC ]")
+							webhook.set_title(title=f"Catched some cheater {username} ({userID})")
+							webhook.set_desc(f'This body catched with flag {haxFlags}\nIn enuming: {hack}')
+							webhook.post()
 
 			'''
 			ignoreFlags = 4
@@ -341,51 +340,17 @@ class handler(requestsManager.asyncRequestHandler):
 					replay = self.request.files["score"][0]["body"]
 
 					if UsingRelax:
-						RPBUILD = replayHelperRelax.buildFullReplay
-					else:
-						RPBUILD = replayHelper.buildFullReplay
-
-					if UsingRelax:
 						with open("{}_relax/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
 							f.write(replay)
-						with open("{}_relax_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as rdf:
-							rdf.write(RPBUILD(s.scoreID, rawReplay=self.request.files["score"][0]["body"]))
 					else:
 						with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
 							f.write(replay)
-						with open("{}_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as rdf:
-							rdf.write(RPBUILD(s.scoreID, rawReplay=self.request.files["score"][0]["body"]))
-
-					# Check Replay from RPBUILD				
-					#if UsingRelax:
-					#	cgparsed = threading.Thread(target=lambda: circleparse.parse_replay_file("{}_relax_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)))).start()
-					#else:									
-					#	cgparsed = threading.Thread(target=lambda: circleparse.parse_replay_file("{}_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)))).start()
-					
-					cg = circleguard.Circleguard(glob.conf.config["osuapi"]["apikey"])
-					m = loadable.Map(beatmapInfo.beatmapID, num=1)
-					d = enums.StealDetect(20) + enums.RelaxDetect(50)
-					cg.load(m)
-
-					if UsingRelax:
-						daReplay = loadable.ReplayPath("{}_relax_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)))
-					else:
-						daReplay = loadable.ReplayPath("{}_full/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)))
-					log.info("[Loaded Replay] ID {} for {}".format((s.scoreID), daReplay))
-					c = loadable.Check(daReplay, d)
-					# threading.Thread(target=lambda: cg.run(c)).start()
-					for r in cg.run(c): # r is a StealResult
-						log.info(cg.run(c))
-						if r.ischeat:
-							webhook = Webhook(glob.conf.config["discord"]["ahook"],
-										  color=0xadd836,
-										  footer="Man... this is worst player. [ Replay Check AC ]")
-							webhook.set_title(title=f"Catched some cheater {username} ({userID})")
-							webhook.set_desc(f"wtf, {r.later_replay.username}'s replay on map {r.later_replay.map_id} +{r.later_replay.mods}")
-							webhook.set_desc(f"is stolen from {r.earlier_replay.username} with similarity {r.similarity}")
-							webhook.post()
 
 					if glob.conf.config["cono"]["enable"]:
+						if UsingRelax:
+							RPBUILD = replayHelperRelax.buildFullReplay
+						else:
+							RPBUILD = replayHelper.buildFullReplay
 						# We run this in a separate thread to avoid slowing down scores submission,
 						# as cono needs a full replay
 						threading.Thread(target=lambda: glob.redis.publish(
