@@ -147,7 +147,7 @@ class config:
 
 		self.config.add_section("beatconnect")
 		self.config.set("beatconnect", "enable", "False")
-		self.config.set("beatconnect", "enable", "")
+		self.config.set("beatconnect", "apikey", "")
 
 		self.config.add_section("cheesegull")
 		self.config.set("cheesegull", "apiurl", "http://cheesegu.ll/api")
