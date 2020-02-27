@@ -150,7 +150,7 @@ class config:
 		self.config.set("beatconnect", "apikey", "")
 
 		self.config.add_section("cheesegull")
-		self.config.set("cheesegull", "apiurl", "http://cheesegu.ll/api")
+		self.config.set("cheesegull", "apiurl", "https://storage.ainu.pw/api")
 
 		self.config.add_section("discord")
 		self.config.set("discord", "enable", "False")
