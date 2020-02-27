@@ -25,14 +25,12 @@ class handler(requestsManager.asyncRequestHandler):
 
 			self.set_status(200, "OK")
 			if glob.conf.config["beatconnect"]["enable"]:
-				uniqueid = None
 				beatmap = requests.get("https://beatconnect.io/api/beatmap/{}/?token={}".format(bid, glob.conf.config["beatconnect"]["apikey"])).text
-				if beatmap != "null\n":
-					uniqueid = json.loads(beatmap)['unique_id']
+				uniqueid = json.loads(beatmap)['unique_id']
 				url = "https://beatconnect.io/b/{}/{}{}".format(bid, uniqueid, "?novideo=1" if noVideo else "")
-				response = requests.get(url)
 			else:
 				url = "http://176.9.138.174:62011/d/{}{}".format(bid, "?novideo" if noVideo else "")
+			response = requests.get(url)
 			self.add_header("Content-Type", "application/octet-stream")
 			self.add_header("Content-Length", response.headers['Content-Length'])
 			self.add_header("Content-Disposition", response.headers['Content-Disposition'])
