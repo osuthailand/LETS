@@ -32,7 +32,7 @@ class handler(requestsManager.asyncRequestHandler):
 				url = "https://beatconnect.io/b/{}/{}{}".format(bid, uniqueid, "?novideo=1" if noVideo else "")
 				response = requests.get(url)
 			else:
-				url = "https://pisstau.be/d/{}{}".format(bid, "?novideo" if noVideo else "")
+				url = "http://176.9.138.174:62011/d/{}{}".format(bid, "?novideo" if noVideo else "")
 			self.add_header("Content-Type", "application/octet-stream")
 			self.add_header("Content-Length", response.headers['Content-Length'])
 			self.add_header("Content-Disposition", response.headers['Content-Disposition'])
