@@ -48,6 +48,8 @@ class handler(requestsManager.asyncRequestHandler):
 				bid = int(bid)
 
 				self.set_status(302, "Moved Temporarily")
+				#URL CAN BE CHANGED TO ANYTHING
+				#SUCH AS https://akatsuki.pw/d/
 				url = "http://176.9.138.174:62011/d/{}{}".format(bid, "?novideo" if noVideo else "")
 				self.add_header("Location", url)
 				self.add_header("Cache-Control", "no-cache")
