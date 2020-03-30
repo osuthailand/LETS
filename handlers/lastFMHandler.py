@@ -53,7 +53,7 @@ class handler(requestsManager.asyncRequestHandler):
             else:
                 webhook.set_desc(f'This body catched with undefined flag {arguments_cheat}')
 
-        if glob.conf.extra["mode"]["anticheat"]:
-            webhook.post()
+            if glob.conf.extra["mode"]["anticheat"] == True:
+                webhook.post()
 
         return self.write("-3")
