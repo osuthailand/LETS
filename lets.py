@@ -262,13 +262,6 @@ if __name__ == "__main__":
 		# Make array of bools to respective rank id's
 		glob.conf.extra["_allowed_beatmap_rank"] = [getattr(rankedStatuses, key) for key in allowed_beatmap_rank] # Store the allowed beatmap rank id's into glob
 
-
-		# Discord
-		if generalUtils.stringToBool(glob.conf.config["discord"]["enable"]):
-			glob.schiavo = schiavo.schiavo(glob.conf.config["discord"]["boturl"], "**lets**")
-		else:
-			consoleHelper.printColored("[!] Warning! Discord logging is disabled!", bcolors.YELLOW)
-
 		# Check debug mods
 		glob.debug = generalUtils.stringToBool(glob.conf.config["server"]["debug"])
 		if glob.debug:
