@@ -82,9 +82,6 @@ class config:
 			self.config.get("cheesegull", "apiurl")
 
 			self.config.get("discord", "enable")
-			self.config.get("discord", "boturl")
-			self.config.get("discord", "devgroup")
-			self.config.get("discord", "secretwebhook")
 			self.config.get("discord", "ahook")
 			self.config.get("discord", "score")
 			self.config.get("discord", "rxscore")
@@ -154,9 +151,6 @@ class config:
 
 		self.config.add_section("discord")
 		self.config.set("discord", "enable", "False")
-		self.config.set("discord", "boturl", "")
-		self.config.set("discord", "devgroup", "")
-		self.config.set("discord", "secretwebhook", "")
 		self.config.set("discord", "ahook", "")
 		self.config.set("discord", "score", "")
 		self.config.set("discord", "rxscore", "")
