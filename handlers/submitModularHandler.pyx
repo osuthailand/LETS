@@ -311,6 +311,20 @@ class handler(requestsManager.asyncRequestHandler):
 				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 				return
 
+			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
+			and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
+			and glob.conf.extra["mode"]["anticheat"]:
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
+				log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
+				
+			elif ((s.mods & mods.NIGHTCORE) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
+			and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
+			and glob.conf.extra["mode"]["anticheat"]:
+				userUtils.restrict(userID)
+				userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
+				log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
+
 			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
 			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
