@@ -216,7 +216,7 @@ class score:
 			self.score = int(scoreData[9])
 			self.maxCombo = int(scoreData[10])
 			self.fullCombo = scoreData[11] == 'True'
-			#self.rank = scoreData[12]
+			self.rank = scoreData[12]
 			self.mods = int(scoreData[13])
 			self.passed = scoreData[14] == 'True'
 			self.gameMode = int(scoreData[15])
@@ -343,9 +343,9 @@ class score:
 		"""
 		# Add this score
 		if self.completed >= 0:
-			query = "INSERT INTO scores_relax (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, `time`, play_mode, playtime, completed, accuracy, pp) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
-			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.playTime if self.playTime is not None and not self.passed else self.fullPlayTime, self.completed, self.accuracy * 100, self.pp]))
-
+			query = "INSERT INTO scores_relax (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, `time`, play_mode, playtime, completed, accuracy, pp, rank) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
+			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.playTime if self.playTime is not None and not self.passed else self.fullPlayTime, self.completed, self.accuracy * 100, self.pp, self.rank]))
+			scoreUtils.updateRankCounterRX(self.rank, self.gameMode, userUtils.getID(self.playerName))
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0 and self.completed == 3:
 				glob.db.execute("UPDATE scores_relax SET completed = 2 WHERE id = %s AND completed = 3 LIMIT 1", [self.oldPersonalBest])
