@@ -269,7 +269,7 @@ class handler(requestsManager.asyncRequestHandler):
 					hack = getHackByFlag(int(haxFlags))
 					if type(hack) == str:
 						# THOT DETECTED
-						if glob.conf.config["discord"]["enable"] == True:
+						if glob.conf.config["discord"]["enable"]:
 							webhook = Webhook(glob.conf.config["discord"]["ahook"],
 											  color=0xadd836,
 											  footer="Man... this is worst player. [ Client AC ]")
@@ -629,7 +629,7 @@ class handler(requestsManager.asyncRequestHandler):
 						url = glob.conf.config["discord"]["score"]
 
 					# Then post them!
-					if glob.conf.config["discord"]["enable"] == True:
+					if glob.conf.config["discord"]["enable"]:
 						webhook = Webhook(url, color=0xadd8e6, footer="This score was submitted on osu!Ainu")
 						webhook.set_author(name=username.encode().decode("ASCII", "ignore"), icon='https://a.ainu.pw/{}'.format(userID))
 						webhook.set_title(title=f"New score by {username}!")

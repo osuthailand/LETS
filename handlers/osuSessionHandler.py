@@ -11,7 +11,7 @@ from constants import exceptions
 from objects import glob
 from common.sentry import sentry
 	
-from helpers import generalHelper
+from helpers import generalHelper as session
 
 MODULE_NAME = "osu-session"
 
@@ -45,13 +45,15 @@ class handler(requestsManager.asyncRequestHandler):
 				raise exceptions.need2FAException(MODULE_NAME, username, ip)
 
 			if action != "submit":
+				log.debug("{} didn't send anything like \"submit\" to the server".format(username))
 				self.write("ok")
 				return
 
 			content = self.get_argument("content")
 			try:
 				contentDict = json.loads(content)
-				kotrikhelper.setUserSession(userID, contentDict)
+				session.setUserSession(userID, contentDict)
+				log.debug("Good, We got {} from {}".format(content, username))
 				self.write("ok")
 			except:
 				self.write("Not yet")
