@@ -179,7 +179,8 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Checking folders... ")
 		paths = [
 			".data",
-			".data/beatmaps_osz2"
+			".data/beatmaps_osz",
+			".data/beatmaps_osz2",
 			".data/oppai",
 			".data/catch_the_pp",
 			glob.conf.config["server"]["replayspath"],
