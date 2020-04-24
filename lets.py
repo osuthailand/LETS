@@ -57,6 +57,10 @@ from objects import glob
 from pubSubHandlers import beatmapUpdateHandler
 import secret.achievements.utils
 
+# Remove or comment this part if you're Ainu clones
+# :OMEGALUL:
+from secret.osz2_tools import osz2GetId
+from secret.osz2_tools import osz2Upload
 
 def make_app():
 	return tornado.web.Application([
@@ -97,6 +101,10 @@ def make_app():
 		(r"/letsapi/v1/pp", apiPPHandler.handler),
 		(r"/letsapi/v1/cacheBeatmap", apiCacheBeatmapHandler.handler),
 		(r"/web/lastfm.php", lastFMHandler.handler),
+
+		# Remove or comment this if you're Ainu clones
+		(r"/web/osu-osz2-bmsubmit-getid.php", osz2GetId.handler),
+		(r"/web/osu-osz2-bmsubmit-upload.php", osz2Upload.handler),
 		
 		# Not done yet
 		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
@@ -171,6 +179,7 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Checking folders... ")
 		paths = [
 			".data",
+			".data/beatmaps_osz2"
 			".data/oppai",
 			".data/catch_the_pp",
 			glob.conf.config["server"]["replayspath"],
