@@ -107,6 +107,7 @@ def make_app():
 		(r"/web/osu-osz2-bmsubmit-upload.php", osz2Upload.handler),
 		
 		# Not done yet
+		(r"/web/osu-osz2-bmsubmit-post.php",emptyHandler.handler),
 		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
 		(r"/web/osu-markasread.php", emptyHandler.handler), # Mark As Read
 		(r"/web/osu-addfavourite.php", emptyHandler.handler), # Add Favorite
@@ -179,8 +180,9 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Checking folders... ")
 		paths = [
 			".data",
-			".data/beatmaps_osz",
-			".data/beatmaps_osz2",
+			"storage"
+			"storage/beatmaps_osz",
+			"storage/beatmaps_osz2",
 			".data/oppai",
 			".data/catch_the_pp",
 			glob.conf.config["server"]["replayspath"],
