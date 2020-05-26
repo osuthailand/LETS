@@ -704,9 +704,6 @@ class handler(requestsManager.asyncRequestHandler):
 			}))
 		except exceptions.checkSumNotPassed as e:
 			webhook = Webhook(glob.conf.config["discord"]["ahook"],
-                  color=0xc32c74,
-                  footer="stupid anticheat")
-			webhook = Webhook(glob.conf.config["discord"]["ahook"],
 											  color=0xadd836,
 											  footer="Man... this is worst player. [ Client AC ]")
 			userID = userUtils.getID(e.who)
