@@ -3,8 +3,10 @@ import re
 from objects import glob
 
 
-def verifyScoreData(scoreData, securityHash, bmk=None):
-    #full nonHashedString = "chickenmcnuggets{}o15{}{}smustard{}{}uu{}{}{}{}{}{}{}Q{}{}{}{}{}{}"
+def verifyScoreData(scoreData, securityHash, sbk=None):
+    # Full nonHashedString
+    # Taken from osu! v20200519.1
+    # chickenmcnuggets{0}o15{1}{2}smustard{3}{4}uu{5}{6}{7}{8}{9}{10}{11}Q{12}{13}{15}{14:yyMMddHHmmss}{16}{17}
     nonHashedString = "chickenmcnuggets{}o15{}{}smustard{}{}uu{}{}{}{}{}{}{}Q{}{}{}{}{}".format(
         int(scoreData[4])+int(scoreData[3]),
         int(scoreData[5]),
@@ -22,7 +24,8 @@ def verifyScoreData(scoreData, securityHash, bmk=None):
         int(scoreData[15]),
         int(scoreData[17].strip()[:8]), # first 8 symbols, bcs its yyyymmdd\x14\x14\x14\x14\x14
         int(scoreData[16]),
-        re.sub('[\x00-\x08\x0B-\x1F]', '', securityHash.strip())
+        re.sub('[\x00-\x08\x0B-\x1F]', '', securityHash.strip()),
+        sbk
     )
 
     hashedString = str(hashlib.md5(nonHashedString.encode()).hexdigest())
