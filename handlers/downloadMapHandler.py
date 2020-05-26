@@ -50,7 +50,7 @@ class handler(requestsManager.asyncRequestHandler):
 				self.set_status(302, "Moved Temporarily")
 				#URL CAN BE CHANGED TO ANYTHING
 				#SUCH AS https://akatsuki.pw/d/
-				url = "https://pisstau.be/d/{}{}".format(bid, "?novideo" if noVideo else "")
+				url = "https://osu.gatari.pw/d/{}{}".format(bid, "?novideo" if noVideo else "")
 				self.add_header("Location", url)
 				self.add_header("Cache-Control", "no-cache")
 				self.add_header("Pragma", "no-cache")

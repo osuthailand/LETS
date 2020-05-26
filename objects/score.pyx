@@ -149,7 +149,7 @@ class score:
 		rank -- new score rank
 		"""
 		self.rank = rank
-			
+
 	def setDataFromDB(self, scoreID, rank = None):
 		"""
 		Set this object's score data from db
@@ -229,7 +229,6 @@ class score:
 			# Set completed status
 			self.setCompletedStatus()
 
-
 	def getData(self, pp=True):
 		"""Return score row relative to this score for getscores"""
 		return "{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|1\n".format(
@@ -256,18 +255,18 @@ class score:
 		"""
 		try:
 			self.completed = 0
-			
+
 			# Create beatmap object
 			if b is None:
 				b = beatmap.beatmap(self.fileMd5, 0)
-				
+
 			if not scoreUtils.isRankable(self.mods):
 				return
-			
+
 			if self.passed:
 				# Get userID
 				userID = userUtils.getID(self.playerName)
-				
+
 				# Make sure we don't have another score identical to this one
 				# TODO: time check
 				duplicate = glob.db.fetch("SELECT id FROM scores WHERE userid = %s AND beatmap_md5 = %s AND play_mode = %s AND score = %s LIMIT 1", [userID, self.fileMd5, self.gameMode, self.score])
@@ -275,7 +274,7 @@ class score:
 					# Found same score in db. Don't save this score.
 					self.completed = -1
 					return
-				
+
 				# No duplicates found.
 				# Get right "completed" value
 				if b.rankedStatus == rankedStatuses.LOVED and glob.conf.extra["lets"]["submit"]["loved-dont-give-pp"]:
@@ -325,6 +324,8 @@ class score:
 			query = "INSERT INTO scores (id, beatmap_md5, userid, score, max_combo, full_combo, mods, 300_count, 100_count, 50_count, katus_count, gekis_count, misses_count, `time`, play_mode, playtime, completed, accuracy, pp, rank) VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);"
 			self.scoreID = int(glob.db.execute(query, [self.fileMd5, userUtils.getID(self.playerName), self.score, self.maxCombo, int(self.fullCombo), self.mods, self.c300, self.c100, self.c50, self.cKatu, self.cGeki, self.cMiss, self.playDateTime, self.gameMode, self.playTime if self.playTime is not None and not self.passed else self.fullPlayTime, self.completed, self.accuracy * 100, self.pp, self.rank]))
 			scoreUtils.updateRankCounter(self.rank, self.gameMode, userUtils.getID(self.playerName))
+		#	if self.completed == 3:
+			#	scoreUtils.insertGraph(self.gameMode)
 			# Set old personal best to completed = 2
 			if self.oldPersonalBest != 0 and self.completed == 3:
 				glob.db.execute("UPDATE scores SET completed = 2 WHERE id = %s AND completed = 3 LIMIT 1", [self.oldPersonalBest])

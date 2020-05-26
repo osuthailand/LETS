@@ -106,6 +106,8 @@ class piano:
 				multiplier *= 0.95
 			if scoreMods & mods.EASY != 0:
 				multiplier *= 0.50
+			if scoreMods & mods.HARDROCK != 0:
+				multiplier *= 1.20
 			if scoreMods & mods.DOUBLETIME != 0:
 				multiplier *= 1.45
 			if scoreMods & mods.NIGHTCORE != 0:

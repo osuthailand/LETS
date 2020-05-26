@@ -27,6 +27,7 @@ from handlers import apiPPHandler
 from handlers import apiStatusHandler
 from handlers import banchoConnectHandler
 from handlers import checkUpdatesHandler
+from handlers import checkAinuUpdatesHandler
 from handlers import defaultHandler
 from handlers import downloadMapHandler
 from handlers import emptyHandler
@@ -103,6 +104,8 @@ def make_app():
 		(r"/web/lastfm.php", lastFMHandler.handler),
 
 		# Remove or comment this if you're Ainu clones
+		(r"/web/check-updates-ainu.php", checkUpdatesHandler.handler),
+		#(r"/web/check-updates-ainu.php", checkAinuUpdatesHandler.handler),
 		(r"/web/osu-osz2-bmsubmit-getid.php", osz2GetId.handler),
 		(r"/web/osu-osz2-bmsubmit-upload.php", osz2Upload.handler),
 		

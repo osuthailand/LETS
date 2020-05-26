@@ -40,11 +40,11 @@ class scoreboardRelax:
 	@staticmethod
 	def buildQuery(params):
 		return "{select} {joins} {country} {mods} {friends} {order} {limit}".format(**params)
-		
+
 	def getPersonalBest(self):
 		if self.userID == 0:
 			return None
-			
+
 		# Query parts
 		cdef str select = ""
 		cdef str joins = ""
@@ -74,12 +74,12 @@ class scoreboardRelax:
 		if id_ is None:
 			return None
 		return id_["id"]
-			
+
 	def setScores(self):
 		"""
 		Set scores list
 		"""
-		
+
 		# Reset score list
 		self.scores = []
 		self.scores.append(-1)
@@ -110,7 +110,7 @@ class scoreboardRelax:
 
 		# Get top 50 scores
 		select = "SELECT *"
-		joins = "FROM scores_relax STRAIGHT_JOIN users ON scores_relax.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores_relax.beatmap_md5 = %(beatmap_md5)s AND scores_relax.play_mode = %(play_mode)s AND scores_relax.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %(userid)s)"
+		joins = "FROM scores_relax STRAIGHT_JOIN users FORCE INDEX(userid) ON scores_relax.userid = users.id STRAIGHT_JOIN users_stats FORCE INDEX(id) ON users.id = users_stats.id WHERE scores_relax.beatmap_md5 = %(beatmap_md5)s AND scores_relax.play_mode = %(play_mode)s AND scores_relax.completed = 3 AND (users.privileges & 1 > 0 OR users.id = %(userid)s)"
 
 		# Country ranking
 		if self.country:
@@ -213,10 +213,10 @@ class scoreboardRelax:
 			return
 
 		overwrite = self.ppboard and "pp" or "score"
-		
+
 		# We have a score, run the huge query
 		# Base query
-		query = """SELECT COUNT(*) AS rank FROM scores_relax STRAIGHT_JOIN users ON scores_relax.userid = users.id STRAIGHT_JOIN users_stats ON users.id = users_stats.id WHERE scores_relax.{0} >= (
+		query = """SELECT COUNT(*) AS rank FROM scores_relax STRAIGHT_JOIN users FORCE INDEX(userid) ON scores_relax.userid = users.id STRAIGHT_JOIN users_stats FORCE INDEX(id) ON users.id = users_stats.id WHERE scores_relax.{0} >= (
 		SELECT {0} FROM scores_relax WHERE beatmap_md5 = %(md5)s AND play_mode = %(mode)s AND completed = 3 AND userid = %(userid)s LIMIT 1
 		) AND scores_relax.beatmap_md5 = %(md5)s AND scores_relax.play_mode = %(mode)s AND scores_relax.completed = 3 AND users.privileges & 1 > 0""".format(overwrite)
 		# Country

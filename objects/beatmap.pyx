@@ -48,7 +48,7 @@ class beatmap:
 		self.mode = 0
 
 		self.rankingDate = 0
-		
+
 		# Statistics for ranking panel
 		self.playcount = 0
 
@@ -65,10 +65,10 @@ class beatmap:
 		if self.fileMD5 is None:
 			self.rankedStatus = rankedStatuses.NOT_SUBMITTED
 			return
-		
+
 		# Make sure the beatmap is not already in db
 		bdata = objects.glob.db.fetch(
-			"SELECT id, ranked_status_freezed, ranked FROM beatmaps "
+			"SELECT id, ranked_status_freezed, ranked FROM beatmaps FORCE INDEX(beatmap_md5)"
 			"WHERE beatmap_md5 = %s OR beatmap_id = %s LIMIT 1",
 			(self.fileMD5, self.beatmapID)
 		)

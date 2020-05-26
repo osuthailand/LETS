@@ -1,11 +1,13 @@
 **/__pycache__
 **/build
+pp/oppai-rx-old/
 storage
 config.ini
 .data
 .data-c
 runserver.bat
 .idea
+tomejerryrx.py
 common_copied
 common_refractor
 *.c
