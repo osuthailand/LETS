@@ -705,11 +705,13 @@ class handler(requestsManager.asyncRequestHandler):
 		except exceptions.checkSumNotPassed as e:
 			webhook = Webhook(glob.conf.config["discord"]["ahook"],
                   color=0xc32c74,
-                  footer="stupid anticheat")				
+                  footer="stupid anticheat")
+			webhook = Webhook(glob.conf.config["discord"]["ahook"],
+											  color=0xadd836,
+											  footer="Man... this is worst player. [ Client AC ]")
 			userID = userUtils.getID(e.who)
 			webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
-			webhook.set_desc(f'Этот дебил, засабмитил скор каким-то дебильным сабмитером, баним его ребят?')
-			webhook.set_footer(text="sended by submit-moodular-cuckold-checker")
+			webhook.set_desc(f'This moron, he got some stupid score submitter! Ban him guys!')
 			webhook.post()
 			self.write("error: checksum")
 		except:
