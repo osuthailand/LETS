@@ -61,10 +61,12 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check arguments
 			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "osuver"]):
+				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "osuver"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 			else:
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "osuver"]):
+				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "osuver"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -140,13 +142,14 @@ class handler(requestsManager.asyncRequestHandler):
 			if len(scoreData) < 16:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-			if not "bmk" in self.request.arguments:
-				raise exceptions.haxException(userID) # oldver check
+			#if not "bmk" in self.request.arguments:
+			#	raise exceptions.haxException(userID) # oldver check
 			
-			if int(scoreData[17][:8]) != int(self.get_argument("osuver")):
-				self.write("error: version mismatch")
-				return
+			#if int(scoreData[17][:8]) != int(self.get_argument("osuver")):
+			#	self.write("error: version mismatch")
+			#	return
 
+			"""
 			# checksum check
 			#
 			# NOT ITS WORKING, ALL FUCKING FLEX!
@@ -155,6 +158,7 @@ class handler(requestsManager.asyncRequestHandler):
 			isScoreVerfied = kotrikhelper.verifyScoreData(scoreData, securityHash, self.get_argument("sbk", ""))
 			if not isScoreVerfied:
 				raise exceptions.checkSumNotPassed(username, scoreData[0], scoreData[2])
+			"""
 
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
@@ -346,6 +350,8 @@ class handler(requestsManager.asyncRequestHandler):
 			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.PERFECT) > 0) \
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.SUDDENDEATH) > 0) \
 			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
 			and glob.conf.extra["mode"]["anticheat"]:
 				userUtils.ban(userID)
@@ -353,6 +359,8 @@ class handler(requestsManager.asyncRequestHandler):
 			elif ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.PERFECT) > 0) \
+			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.SUDDENDEATH) > 0) \
 			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
 			and not glob.conf.extra["mode"]["anticheat"]:
 				alert = "{}, seems like you've used osu! score submitter limit (Impossible mod combination), this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
@@ -702,15 +710,15 @@ class handler(requestsManager.asyncRequestHandler):
 				'userID': e.userID,
 				"message": "Sorry, you use outdated/bad osu!version. Please update game to submit scores!"
 			}))
-		except exceptions.checkSumNotPassed as e:
-			webhook = Webhook(glob.conf.config["discord"]["ahook"],
-											  color=0xadd836,
-											  footer="Man... this is worst player. [ Client AC ]")
-			userID = userUtils.getID(e.who)
-			webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
-			webhook.set_desc(f'This moron, he got some stupid score submitter! Ban him guys!')
-			webhook.post()
-			self.write("error: checksum")
+		#except exceptions.checkSumNotPassed as e:
+		#	webhook = Webhook(glob.conf.config["discord"]["ahook"],
+		#									  color=0xadd836,
+		#									  footer="Man... this is worst player. [ Client AC ]")
+		#	userID = userUtils.getID(e.who)
+		#	webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
+		#	webhook.set_desc(f'This moron, he got some stupid score submitter! Ban him guys!')
+		#	webhook.post()
+		#	self.write("error: checksum")
 		except:
 			# Try except block to avoid more errors
 			try:
