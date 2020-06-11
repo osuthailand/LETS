@@ -1,8 +1,6 @@
 import requests
 import json
 
-import random
-
 import tornado.gen
 import tornado.web
 
