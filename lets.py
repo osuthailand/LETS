@@ -183,7 +183,7 @@ if __name__ == "__main__":
 		consoleHelper.printNoNl("> Checking folders... ")
 		paths = [
 			".data",
-			"storage"
+			"storage",
 			"storage/beatmaps_osz",
 			"storage/beatmaps_osz2",
 			".data/oppai",
