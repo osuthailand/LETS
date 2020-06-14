@@ -14,3 +14,5 @@ common_refractor
 *.c
 *.so
 *.log
+*.html
+*.pyd
