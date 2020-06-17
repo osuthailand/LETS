@@ -10,6 +10,7 @@ from common.log import logUtils as log
 from common.ripple import scoreUtils
 from constants import exceptions
 from helpers import mapsHelper
+from objects import glob
 
 # constants
 MODULE_NAME = "relaxoppai"
@@ -126,6 +127,8 @@ class oppai:
 				raise exceptions.unsupportedGameModeException()
 
 			command = "./pp/oppai-rx/oppai {}".format(mapFile)
+			if glob.conf.extra["lets"]["windows-mode"]["enabled"]:
+				command = "{} {}".format(glob.conf.extra["lets"]["windows-mode"]["oppai-rx-pp-path"], mapFile)
 			if not self.tillerino:
 				# force acc only for non-tillerino calculation
 				# acc is set for each subprocess if calculating tillerino-like pp sets
