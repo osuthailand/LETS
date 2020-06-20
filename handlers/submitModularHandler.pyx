@@ -61,12 +61,12 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check arguments
 			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
-				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "osuver"]):
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "osuver"]):
+				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 			else:
-				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "osuver"]):
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "osuver"]):
+				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 
 			# TODO: Maintenance check
@@ -103,6 +103,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get score data
 			log.debug("Decrypting score data...")
 			scoreData = aeshelper.decryptRinjdael(aeskey, iv, scoreDataEnc, True).split(":")
+			log.debug(scoreData)
 			if len(scoreData) < 16 or len(scoreData[0]) != 32:
 				return
 			username = scoreData[1].strip()
@@ -142,23 +143,18 @@ class handler(requestsManager.asyncRequestHandler):
 			if len(scoreData) < 16:
 				raise exceptions.invalidArgumentsException(MODULE_NAME)
 
-			#if not "bmk" in self.request.arguments:
-			#	raise exceptions.haxException(userID) # oldver check
+			if not "bmk" in self.request.arguments:
+				raise exceptions.haxException(userID) # oldver check
 			
 			#if int(scoreData[17][:8]) != int(self.get_argument("osuver")):
 			#	self.write("error: version mismatch")
 			#	return
 
-			"""
 			# checksum check
-			#
-			# NOT ITS WORKING, ALL FUCKING FLEX!
-			#	
-			securityHash = aeshelper.decryptRinjdael(aeskey, iv, self.get_argument("s"), True).strip()		
+			securityHash = aeshelper.decryptRinjdael(aeskey, iv, self.get_argument("s"), True).strip()
 			isScoreVerfied = kotrikhelper.verifyScoreData(scoreData, securityHash, self.get_argument("sbk", ""))
 			if not isScoreVerfied:
 				raise exceptions.checkSumNotPassed(username, scoreData[0], scoreData[2])
-			"""
 
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
@@ -708,17 +704,17 @@ class handler(requestsManager.asyncRequestHandler):
 			self.write("error: oldver")
 			glob.redis.publish("peppy:notification", json.dumps({
 				'userID': e.userID,
-				"message": "Sorry, you use outdated/bad osu!version. Please update game to submit scores!"
+				"message": "Sorry, you are using outdated/bad osu!, Please update your game to submit scores!"
 			}))
-		#except exceptions.checkSumNotPassed as e:
-		#	webhook = Webhook(glob.conf.config["discord"]["ahook"],
-		#									  color=0xadd836,
-		#									  footer="Man... this is worst player. [ Client AC ]")
-		#	userID = userUtils.getID(e.who)
-		#	webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
-		#	webhook.set_desc(f'This moron, he got some stupid score submitter! Ban him guys!')
-		#	webhook.post()
-		#	self.write("error: checksum")
+		except exceptions.checkSumNotPassed as e:
+			webhook = Webhook(glob.conf.config["discord"]["ahook"],
+											  color=0xadd8e6,
+											  footer="Man... this is worst player. [ Client AC ]")
+			userID = userUtils.getID(e.who)
+			webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
+			webhook.set_desc(f'Submitted score... but not fully')
+			webhook.post()
+			self.write("error: checksum")
 		except:
 			# Try except block to avoid more errors
 			try:
