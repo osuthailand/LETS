@@ -151,10 +151,10 @@ class handler(requestsManager.asyncRequestHandler):
 			#	return
 
 			# checksum check
-			securityHash = aeshelper.decryptRinjdael(aeskey, iv, self.get_argument("s"), True).strip()
-			isScoreVerfied = kotrikhelper.verifyScoreData(scoreData, securityHash, self.get_argument("sbk", ""))
-			if not isScoreVerfied:
-				raise exceptions.checkSumNotPassed(username, scoreData[0], scoreData[2])
+			#securityHash = aeshelper.decryptRinjdael(aeskey, iv, self.get_argument("s"), True).strip()
+			#isScoreVerfied = kotrikhelper.verifyScoreData(scoreData, securityHash, self.get_argument("sbk", ""))
+			#if not isScoreVerfied:
+			#	raise exceptions.checkSumNotPassed(username, scoreData[0], scoreData[2])
 
 			# Get restricted
 			restricted = userUtils.isRestricted(userID)
@@ -706,15 +706,14 @@ class handler(requestsManager.asyncRequestHandler):
 				'userID': e.userID,
 				"message": "Sorry, you are using outdated/bad osu!, Please update your game to submit scores!"
 			}))
-		except exceptions.checkSumNotPassed as e:
-			webhook = Webhook(glob.conf.config["discord"]["ahook"],
-											  color=0xadd8e6,
-											  footer="Man... this is worst player. [ Client AC ]")
-			userID = userUtils.getID(e.who)
-			webhook.set_title(title=f"Catched some cheater {e.who} ({userID})")
-			webhook.set_desc(f'Submitted score... but not fully')
-			webhook.post()
-			self.write("error: checksum")
+		#except exceptions.checkSumNotPassed as e:
+		#	webhook = Webhook(glob.conf.config["discord"]["ahook"],
+		#									  color=0xadd8e6,
+		#									  footer="Man... this is worst player. [ Client AC ]")
+		#	webhook.set_title(title="Catched some cheater {} ({})".format(username, userID))
+		#	webhook.set_desc(f'Submitted score... but checksum is not passed.')
+		#	webhook.post()
+		#	self.write("error: checksum")
 		except:
 			# Try except block to avoid more errors
 			try:
