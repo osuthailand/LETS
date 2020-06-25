@@ -25,7 +25,7 @@ class handler(requestsManager.asyncRequestHandler):
 			bid = int(bid)
 
 			self.set_status(302, "Moved Temporarily")
-			self.add_header("Location", "https://hentai.ninja/d/{}{}".format(bid, "?novideo" if noVideo else ""))
+			self.add_header("Location", "https://storage.ainu.pw/d/{}{}".format(bid, "?novideo" if noVideo else ""))
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
 		except ValueError:

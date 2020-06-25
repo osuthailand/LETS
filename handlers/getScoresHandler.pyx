@@ -95,7 +95,7 @@ class handler(requestsManager.asyncRequestHandler):
 			bmap.saveFileName(fileName)
 
 			# Create leaderboard object, link it to bmap and get all scores
-			if bool(mods & 128):
+			if int(gameMode) != 3 and bool(mods & 128):
 					sboard = scoreboardRelax.scoreboardRelax(
 					username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
 					)
