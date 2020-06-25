@@ -14,7 +14,7 @@ def getRankInfo(userID, gameMode):
 	data = {"nextUsername": "", "difference": 0, "currentRank": 0}
 	k = "ripple:leaderboard_relax:{}".format(scoreUtils.readableGameMode(gameMode))
 	position = userUtils.getGameRankRx(userID, gameMode) - 1
-	if gameMode == 3:
+	if int(gameMode) == 3:
 		k = "ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode))
 		position = userUtils.getGameRank(userID, gameMode) - 1
 	log.debug("Our position is {}".format(position))
@@ -47,7 +47,7 @@ def update(userID, newScore, gameMode):
 	if userUtils.isAllowed(userID):
 		log.debug("Updating leaderboard...")
 		glob.redis.zadd("ripple:leaderboard_relax:{}".format(scoreUtils.readableGameMode(gameMode)), str(userID), str(newScore))
-		if gameMode == 3:
+		if int(gameMode) == 3:
 			glob.redis.zadd("ripple:leaderboard:{}".format(scoreUtils.readableGameMode(gameMode)), str(userID), str(newScore))
 	else:
 		log.debug("Leaderboard update for user {} skipped (not allowed)".format(userID))
@@ -67,7 +67,7 @@ def updateCountry(userID, newScore, gameMode):
 		if country is not None and len(country) > 0 and country.lower() != "xx":
 			log.debug("Updating {} country leaderboard...".format(country))
 			k = "ripple:leaderboard_relax:{}:{}".format(scoreUtils.readableGameMode(gameMode), country.lower())
-			if gameMode == 3:
+			if int(gameMode) == 3:
 				k = "ripple:leaderboard:{}:{}".format(scoreUtils.readableGameMode(gameMode), country.lower())
 			glob.redis.zadd(k, str(userID), str(newScore))
 	else:
