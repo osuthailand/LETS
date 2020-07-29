@@ -21,7 +21,7 @@ class handler(requestsManager.asyncRequestHandler):
 			args = {}
 			try:
 				# Check user auth because of sneaky people
-				if not requestsManager.checkArguments(self.request.arguments, ["u", "p"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["u", "h"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 				username = self.get_argument("u")
 				password = self.get_argument("h")
