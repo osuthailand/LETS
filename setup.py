@@ -14,6 +14,6 @@ for root, dirs, files in os.walk(os.getcwd()):
 			cythonExt.append(Extension(filePath.replace("\\" if not UNIX else "/", ".")[:-4], [filePath]))
 
 setup(
-    name = "lets pyx modules",
-    ext_modules = cythonize(cythonExt, nthreads = 0 if not UNIX else 4),
+	name = "lets pyx modules",
+	ext_modules = cythonize(cythonExt, nthreads = 0 if not UNIX else 4),
 )
