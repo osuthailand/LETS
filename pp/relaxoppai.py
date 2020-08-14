@@ -155,23 +155,26 @@ class oppai:
 				else:
 					self.pp = temp_pp
 			else:
+				acc_list = [100, 99, 98, 95]
+				if self.acc > 0: acc_list.append(self.acc)
+
 				pp_list = []
-				for acc in [100, 99, 98, 95]:
+				for acc in acc_list:
 					temp_command = command
 					temp_command += " {acc:.2f}%".format(acc=acc)
 					pp, self.stars = self._runOppaiProcess(temp_command)
 
 					# If this is a broken converted, set all pp to 0 and break the loop
 					if self.gameMode == gameModes.TAIKO and self.beatmap.starsStd > 0 and pp > 800:
-						pp_list = [0, 0, 0, 0]
+						pp_list = [0 for i in range(len(acc_list))]
 						break
 
 					pp_list.append(pp)
 				self.pp = pp_list
 
 			log.debug("oppai-relax ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
-		except OppaiError:
-			log.error("oppai-relax ~> oppai-ng error!")
+		except OppaiError as err:
+			log.error("oppai-relax ~> oppai-ng error: {}".format(err))
 			self.pp = 0
 		except exceptions.osuApiFailException:
 			log.error("oppai-relax ~> osu!api error!")
