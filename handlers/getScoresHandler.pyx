@@ -5,6 +5,7 @@ import tornado.web
 from objects import beatmap
 from objects import scoreboard
 from objects import scoreboardRelax
+from objects import scoreboardRelax2
 from common.constants import privileges
 from common.log import logUtils as log
 from common.ripple import userUtils
@@ -96,13 +97,17 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Create leaderboard object, link it to bmap and get all scores
 			if int(gameMode) != 3 and bool(mods & 128):
-					sboard = scoreboardRelax.scoreboardRelax(
-					username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
-					)
+				sboard = scoreboardRelax.scoreboardRelax(
+				username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
+				)
+			elif int(gameMode) == 0 and bool(mods & 8192):
+				sboard = scoreboardRelax2.scoreboardRelax2(
+				username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
+				)
 			else:
-					sboard = scoreboard.scoreboard(
-					username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
-					)
+				sboard = scoreboard.scoreboard(
+				username, gameMode, bmap, setScores=True, country=country, mods=modsFilter, friends=friends
+				)
 
 			# Data to return
 			data = ""

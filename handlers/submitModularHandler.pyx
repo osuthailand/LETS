@@ -16,7 +16,7 @@ from common import generalUtils
 from common.constants import gameModes
 from common.constants import mods
 from common.log import logUtils as log
-from common.ripple import userUtils
+from common.ripple import userUtils, scoreUtils
 from common.web import requestsManager
 from constants import exceptions
 from constants import rankedStatuses
@@ -24,8 +24,10 @@ from constants.exceptions import ppCalcException
 from helpers import aeshelper
 from helpers import replayHelper
 from helpers import replayHelperRelax
+from helpers import replayHelperRelax2
 from helpers import leaderboardHelper
 from helpers import leaderboardHelperRelax
+from helpers import leaderboardHelperRelax2
 from helpers import kotrikhelper
 from helpers.generalHelper import zingonify, getHackByFlag
 from objects import beatmap
@@ -33,7 +35,9 @@ from objects import glob
 from objects import score
 from objects import scoreboard
 from objects import scoreRelax
+from objects import scoreRelax2
 from objects import scoreboardRelax
+from objects import scoreboardRelax2
 from objects.charts import BeatmapChart, OverallChart
 from secret import butterCake
 from secret.discord_hooks import Webhook
@@ -162,15 +166,20 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get variables for relax
 			used_mods = int(scoreData[13])
 			UsingRelax = used_mods & 128
+			UsingRelax2 = used_mods & 8192
 
 			# Create score object and set its data
 			if UsingRelax:
 				log.info("[RELAX] {} has submitted a score on {}...".format(username, scoreData[0]))
+			elif UsingRelax2:
+				log.info("[AUTOPILOT] {} has submitted a score on {}...".format(username, scoreData[0]))
 			else:
 				log.info("[VANILLA] {} has submitted a score on {}...".format(username, scoreData[0]))
 			
 			if UsingRelax:
 				s = scoreRelax.score()
+			elif UsingRelax2:
+				s = scoreRelax2.score()
 			else:
 				s = score.score()
 			s.setDataFromScoreData(scoreData, quit_=quit_, failed=failed)
@@ -211,6 +220,8 @@ class handler(requestsManager.asyncRequestHandler):
 				length = math.ceil(int(self.get_argument("ft")) / 1000)
 			if UsingRelax: 	
 				userUtils.incrementPlaytimeRX(userID, s.gameMode, length)
+			elif UsingRelax2:
+				userUtils.incrementPlaytimeAP(userID, s.gameMode, length)
 			else:
 				userUtils.incrementPlaytime(userID, s.gameMode, length)
 			midPPCalcException = None
@@ -219,7 +230,7 @@ class handler(requestsManager.asyncRequestHandler):
 			except Exception as e:
 				# Intercept ALL exceptions and bypass them.
 				# We want to save scores even in case PP calc fails
-				# due to some rippoppai bugs.
+				# due to some rippoppai bugs. 
 				# I know this is bad, but who cares since I'll rewrite
 				# the scores server again.
 				log.error("Caught an exception in pp calculation, re-raising after saving score in db")
@@ -229,17 +240,26 @@ class handler(requestsManager.asyncRequestHandler):
 			# Restrict obvious cheaters
 			if not restricted:
 				rx_pp = glob.conf.extra["lets"]["submit"]["max-std-pp"]
+				ap_pp = glob.conf.extra["lets"]["submit"]["max-std-pp_ap"]
 				oof_pp = glob.conf.extra["lets"]["submit"]["max-vanilla-pp"]
 				
-				relax = 1 if used_mods & 128 else 0
+				relax = 1 if used_mods & 128 else 2 if used_mods & 8192 else 0
 				
 				unrestricted_user = userUtils.noPPLimit(userID, relax)
 				
 				if UsingRelax: 
+					if (s.pp >= 1300 and s.gameMode == gameModes.STD) and userID not in userUtils.getLegitPlayers() and userUtils.ifUserIsNotFlagged(userID):
+						userUtils.requestLiveplay(userID)
+						log.warning("**{}** ({}) has been requested a liveplay due to too high pp gain **({}pp)**".format(username, userID, round(s.pp, 2)), "cm")
+						
 					if (s.pp >= rx_pp and s.gameMode == gameModes.STD) and not unrestricted_user and not glob.conf.extra["mode"]["no-pp-cap"]:
 						userUtils.restrict(userID)
 						userUtils.appendNotes(userID, "Restricted due to too high pp gain ({}pp)".format(s.pp))
 						log.warning("**{}** ({}) has been restricted due to too high pp gain **({}pp)**".format(username, userID, s.pp), "cm")
+				elif UsingRelax2:
+					if (s.pp >= 2500 and s.gameMode == gameModes.STD) and userID not in userUtils.getLegitPlayers() and userUtils.ifUserIsNotFlagged(userID):
+						userUtils.requestLiveplay(userID)
+						log.warning("**{}** ({}) has been requested a liveplay due to too high pp gain **({}pp)**".format(username, userID, round(s.pp, 2)), "cm")
 				else:
 					if (s.pp >= oof_pp and s.gameMode == gameModes.STD) and not unrestricted_user and not glob.conf.extra["mode"]["no-pp-cap"]:
 						userUtils.restrict(userID)
@@ -260,13 +280,23 @@ class handler(requestsManager.asyncRequestHandler):
 			
 			# Right before submitting the score, get the personal best score object (we need it for charts)
 			if s.passed and s.oldPersonalBest > 0:
-				oldPersonalBestRank = glob.personalBestCacheRX.get(userID, s.fileMd5) if UsingRelax else glob.personalBestCache.get(userID, s.fileMd5)
+				if UsingRelax2:
+					oldPersonalBestRank = glob.personalBestCacheRX2.get(userID, s.fileMd5)  
+				elif UsingRelax:
+					oldPersonalBestRank = glob.personalBestCacheRX.get(userID, s.fileMd5)  
+				else:
+					oldPersonalBestRank = glob.personalBestCache.get(userID, s.fileMd5)
 				if oldPersonalBestRank == 0:
-					# oldPersonalBestRank not found in cache, get it from db through a scoreboard object
-					oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False) if UsingRelax else scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
+					# oldPersonalBestRank not found in cache, get it from db through a scoreboard objec
+					if UsingRelax: 
+						oldScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False) 
+					elif UsingRelax2:
+						oldScoreboard = scoreboardRelax2.scoreboardRelax2(username, s.gameMode, beatmapInfo, False) 
+					else:
+						oldScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
 					oldScoreboard.setPersonalBestRank()
 					oldPersonalBestRank = max(oldScoreboard.personalBestRank, 0)
-				oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank) if UsingRelax else score.score(s.oldPersonalBest, oldPersonalBestRank)
+				oldPersonalBest = scoreRelax.score(s.oldPersonalBest, oldPersonalBestRank) if UsingRelax else scoreRelax2.score(s.oldPersonalBest, oldPersonalBestRank) if UsingRelax2 else score.score(s.oldPersonalBest, oldPersonalBestRank)
 			else:
 				oldPersonalBestRank = 0
 				oldPersonalBest = None
@@ -328,26 +358,25 @@ class handler(requestsManager.asyncRequestHandler):
 				requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
 				return
 
-			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
-			and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
-			and glob.conf.extra["mode"]["anticheat"]:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
-				
-			elif ((s.mods & mods.NIGHTCORE) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
-			and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
-			and glob.conf.extra["mode"]["anticheat"]:
-				userUtils.restrict(userID)
-				userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
-				log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
+			if not UsingRelax2:
+				if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
+				and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
+				and glob.conf.extra["mode"]["anticheat"]:
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
+					log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
+					
+				elif ((s.mods & mods.NIGHTCORE) > 0 and (s.mods & mods.FLASHLIGHT) > 0) \
+				and ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.HIDDEN) > 0) and s.pp > 1000 \
+				and glob.conf.extra["mode"]["anticheat"]:
+					userUtils.restrict(userID)
+					userUtils.appendNotes(userID, "Restricted due to too high pp gain and too brutal ({}pp)".format(s.pp))
+					log.warning("**{}** ({}) has been restricted due to too high pp gain and too brutal **({}pp)**".format(username, userID, s.pp), "cm")
 
 			# Ci metto la faccia, ci metto la testa e ci metto il mio cuore
 			if ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
-			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.PERFECT) > 0) \
-			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.SUDDENDEATH) > 0) \
 			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
 			and glob.conf.extra["mode"]["anticheat"]:
 				userUtils.ban(userID)
@@ -355,8 +384,6 @@ class handler(requestsManager.asyncRequestHandler):
 			elif ((s.mods & mods.DOUBLETIME) > 0 and (s.mods & mods.HALFTIME) > 0) \
 			or ((s.mods & mods.HARDROCK) > 0 and (s.mods & mods.EASY) > 0)\
 			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.RELAX2) > 0) \
-			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.PERFECT) > 0) \
-			or ((s.mods & mods.RELAX) > 0 and (s.mods & mods.SUDDENDEATH) > 0) \
 			or ((s.mods & mods.SUDDENDEATH) > 0 and (s.mods & mods.NOFAIL) > 0) \
 			and not glob.conf.extra["mode"]["anticheat"]:
 				alert = "{}, seems like you've used osu! score submitter limit (Impossible mod combination), this score won't submit for you.".format(username.encode().decode("ASCII", "ignore"))
@@ -379,6 +406,9 @@ class handler(requestsManager.asyncRequestHandler):
 					if UsingRelax:
 						with open("{}_relax/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
 							f.write(replay)
+					elif UsingRelax2:
+						with open("{}_autopilot/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
+							f.write(replay)
 					else:
 						with open("{}/replay_{}.osr".format(glob.conf.config["server"]["replayspath"], (s.scoreID)), "wb") as f:
 							f.write(replay)
@@ -386,6 +416,8 @@ class handler(requestsManager.asyncRequestHandler):
 					if glob.conf.config["cono"]["enable"]:
 						if UsingRelax:
 							RPBUILD = replayHelperRelax.buildFullReplay
+						elif UsingRelax2:
+							RPBUILD = replayHelperRelax2.buildFullReplay
 						else:
 							RPBUILD = replayHelper.buildFullReplay
 						# We run this in a separate thread to avoid slowing down scores submission,
@@ -431,14 +463,16 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get "before" stats for ranking panel (only if passed)
 			if s.passed:
 				# Get stats and rank
-				oldUserStats = glob.userStatsCacheRX.get(userID, s.gameMode) if UsingRelax else glob.userStatsCache.get(userID, s.gameMode)
-				oldRank = userUtils.getGameRankRx(userID, s.gameMode) if UsingRelax else userUtils.getGameRank(userID, s.gameMode) 
+				oldUserStats = glob.userStatsCacheRX.get(userID, s.gameMode) if UsingRelax else glob.userStatsCacheRX2.get(userID, s.gameMode) if UsingRelax2 else glob.userStatsCache.get(userID, s.gameMode)
+				oldRank = userUtils.getGameRankRx(userID, s.gameMode) if UsingRelax else userUtils.getGameRankRx2(userID, s.gameMode) if UsingRelax2 else userUtils.getGameRank(userID, s.gameMode) 
 
 			# Always update users stats (total/ranked score, playcount, level, acc and pp)
 			# even if not passed
 			log.debug("Updating {}'s stats...".format(username))
 			if UsingRelax:
 				userUtils.updateStatsRx(userID, s)
+			elif UsingRelax2:
+				userUtils.updateStatsRx2(userID, s)
 			else:
 				userUtils.updateStats(userID, s)
 
@@ -458,6 +492,11 @@ class handler(requestsManager.asyncRequestHandler):
 					glob.userStatsCacheRX.update(userID, s.gameMode, newUserStats)
 					leaderboardHelperRelax.update(userID, newUserStats["pp"], s.gameMode)
 					maxCombo = userUtils.getMaxComboRX(userID, s.gameMode)
+				elif UsingRelax2:
+					newUserStats = userUtils.getUserStatsRx2(userID)
+					glob.userStatsCacheRX2.update(userID, s.gameMode, newUserStats)
+					leaderboardHelperRelax2.update(userID, newUserStats["pp"], s.gameMode)
+					maxCombo = userUtils.getMaxComboRX2(userID, s.gameMode)
 				else:
 					newUserStats = userUtils.getUserStats(userID, s.gameMode)
 					glob.userStatsCache.update(userID, s.gameMode, newUserStats)
@@ -469,6 +508,9 @@ class handler(requestsManager.asyncRequestHandler):
 					if UsingRelax:
 						leaderboardHelperRelax.update(userID, newUserStats["pp"], s.gameMode)
 						leaderboardHelperRelax.updateCountry(userID, newUserStats["pp"], s.gameMode)
+					elif UsingRelax2:
+						leaderboardHelperRelax2.update(userID, newUserStats["pp"], s.gameMode)
+						leaderboardHelperRelax2.updateCountry(userID, newUserStats["pp"], s.gameMode)
 					else:
 						leaderboardHelper.update(userID, newUserStats["pp"], s.gameMode)
 						leaderboardHelper.updateCountry(userID, newUserStats["pp"], s.gameMode)
@@ -476,6 +518,8 @@ class handler(requestsManager.asyncRequestHandler):
 			# Update total hits
 			if UsingRelax:
 				userUtils.updateTotalHitsRX(score=s)
+			elif UsingRelax2:
+				userUtils.updateTotalHitsRX2(score=s)
 			else:
 				userUtils.updateTotalHits(score=s)
 			# TODO: Update max combo
@@ -509,6 +553,8 @@ class handler(requestsManager.asyncRequestHandler):
 				# Get personal best after submitting the score
 				if UsingRelax:
 					newScoreboard = scoreboardRelax.scoreboardRelax(username, s.gameMode, beatmapInfo, False)
+				elif UsingRelax2:
+					newScoreboard = scoreboardRelax2.scoreboardRelax2(username, s.gameMode, beatmapInfo, False)
 				else:
 					newScoreboard = scoreboard.scoreboard(username, s.gameMode, beatmapInfo, False)
 
@@ -518,12 +564,16 @@ class handler(requestsManager.asyncRequestHandler):
 					
 				if UsingRelax:
 					currentPersonalBest = scoreRelax.score(personalBestID, newScoreboard.personalBestRank)
+				elif UsingRelax2:
+					currentPersonalBest = scoreRelax2.score(personalBestID, newScoreboard.personalBestRank)
 				else:
 					currentPersonalBest = score.score(personalBestID, newScoreboard.personalBestRank)
 
 				# Get rank info (current rank, pp/score to next rank, user who is 1 rank above us)
 				if bool(s.mods & 128):
 					rankInfo = leaderboardHelperRelax.getRankInfo(userID, s.gameMode)
+				elif bool(s.mods & 8192):
+					rankInfo = leaderboardHelperRelax2.getRankInfo(userID, s.gameMode)
 				else:
 					rankInfo = leaderboardHelper.getRankInfo(userID, s.gameMode)
 
@@ -602,9 +652,9 @@ class handler(requestsManager.asyncRequestHandler):
 				# Send message to #announce if we're rank #1
 				if newScoreboard.personalBestRank == 1 and s.completed == 3 and not restricted:
 					annmsg = "[{}] [{}/{}u/{} {}] achieved rank #1 on [https://osu.ppy.sh/b/{} {}] ({})".format(
-						"RELAX" if UsingRelax else "VANILLA",
+						"RELAX" if UsingRelax else "AUTOPILOT" if UsingRelax2 else "VANILLA",
 						glob.conf.config["server"]["serverurl"],
-						"rx/" if UsingRelax else "",
+						"rx/" if UsingRelax else "ap/" if UsingRelax2 else "",
 						userID,
 						username.encode().decode("ASCII", "ignore"),
 						beatmapInfo.beatmapID,
@@ -614,6 +664,21 @@ class handler(requestsManager.asyncRequestHandler):
 								
 					params = urlencode({"k": glob.conf.config["server"]["apikey"], "to": "#announce", "msg": annmsg})
 					requests.get("{}/api/v1/fokabotMessage?{}".format(glob.conf.config["server"]["banchourl"], params))
+
+					if userUtils.ifUserInClan(userID):
+						if UsingRelax:
+							scoreUtils.firstPlaceCPPRx(userID, int(s.pp), s.gameMode)
+						elif UsingRelax:
+							scoreUtils.firstPlaceCPPAp(userID, int(s.pp), s.gameMode)
+						else:
+							scoreUtils.firstPlaceCPP(userID, int(s.pp), s.gameMode)
+
+
+					firstplace = glob.db.fetch("SELECT id FROM first_places WHERE beatmap_id = {} AND rx = {} LIMIT 1".format(beatmapInfo.beatmapID, 1 if UsingRelax else 2 if UsingRelax2 else 0))
+					if firstplace is not None:
+						glob.db.execute("DELETE FROM first_places WHERE id = {}".format(firstplace["id"]))
+					glob.db.execute("INSERT INTO first_places(id, userid, scoreid, mode, rx, beatmap_id) VALUES(NULL, {}, {}, {}, {}, {})".format(userID, s.scoreID, s.gameMode, 1 if UsingRelax else 2 if UsingRelax2 else 0, beatmapInfo.beatmapID))
+
 
 					# Let's send them to Discord too, because we cool :sunglasses:
 					# First, let's check what mod does the play have
@@ -646,6 +711,8 @@ class handler(requestsManager.asyncRequestHandler):
 					# Second, get the webhook link from config
 					if UsingRelax:
 						url = glob.conf.config["discord"]["rxscore"]
+					elif UsingRelax2:
+						url = glob.conf.config["discord"]["apscore"]
 					else:
 						url = glob.conf.config["discord"]["score"]
 
@@ -654,7 +721,7 @@ class handler(requestsManager.asyncRequestHandler):
 						webhook = Webhook(url, color=0xadd8e6, footer="This score was submitted on osu!Ainu")
 						webhook.set_author(name=username.encode().decode("ASCII", "ignore"), icon='https://a.ainu.pw/{}'.format(userID))
 						webhook.set_title(title=f"New score by {username}!")
-						webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
+						webhook.set_desc("[{}] Achieved #1 on mode **{}**, {} +{}!".format("RELAX" if UsingRelax else "AUTOPILOT" if UsingRelax2 else "VANILLA", gameModes.getGamemodeFull(s.gameMode), beatmapInfo.songName.encode().decode("ASCII", "ignore"), ScoreMods))
 						webhook.add_field(name='Total: {}pp'.format(float("{0:.2f}".format(s.pp))), value='Gained: +{}pp'.format(float("{0:.2f}".format(ppGained))))
 						webhook.add_field(name='Actual rank: {}'.format(rankInfo["currentRank"]), value='[Download Link](https://storage.ainu.pw/d/{})'.format(beatmapInfo.beatmapSetID))
 						webhook.add_field(name='Played by: {}'.format(username.encode().decode("ASCII", "ignore")), value="[Go to user's profile]({}/{}u/{})".format(glob.conf.config["server"]["serverurl"], "rx/" if UsingRelax else "", userID))

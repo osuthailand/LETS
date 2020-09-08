@@ -10,16 +10,14 @@ from common.log import logUtils as log
 from common.ripple import scoreUtils
 from constants import exceptions
 from helpers import mapsHelper
-from objects import glob
 
 # constants
-MODULE_NAME = "relaxoppai"
+MODULE_NAME = "relax2oppai"
 UNIX = True if os.name == "posix" else False
 
 def fixPath(command):
 	"""
 	Replace / with \ if running under WIN32
-
 	commnd -- command to fix
 	return -- command with fixed paths
 	"""
@@ -41,7 +39,6 @@ class oppai:
 	def __init__(self, __beatmap, __score = None, acc = 0, mods = 0, tillerino = False):
 		"""
 		Set oppai params.
-
 		__beatmap -- beatmap object
 		__score -- score object
 		acc -- manual acc. Used in tillerino-like bot. You don't need this if you pass __score object
@@ -53,7 +50,7 @@ class oppai:
 		self.score = None
 		self.acc = 0
 		self.mods = 0
-		self.combo = -1	#FC
+		self.combo = 0
 		self.misses = 0
 		self.stars = 0
 		self.tillerino = tillerino
@@ -81,26 +78,26 @@ class oppai:
 				self.gameMode = None
 
 		# Calculate pp
-		log.debug("oppai-relax ~> Initialized oppai diffcalc")
+		log.debug("oppai-auto ~> Initialized oppai diffcalc")
 		self.calculatePP()
 
 	@staticmethod
 	def _runOppaiProcess(command):
-		log.debug("oppai-relax ~> running {}".format(command))
+		log.debug("oppai-auto ~> running {}".format(command))
 		process = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		try:
 			output = json.loads(process.stdout.decode("utf-8", errors="ignore"))
 			if "code" not in output or "errstr" not in output:
 				raise OppaiError("No code in json output")
 			if output["code"] != 200:
-				raise OppaiError("oppai-relax error {}: {}".format(output["code"], output["errstr"]))
+				raise OppaiError("oppai-auto error {}: {}".format(output["code"], output["errstr"]))
 			if "pp" not in output or "stars" not in output:
-				raise OppaiError("No pp/stars entry in oppai-relax json output")
+				raise OppaiError("No pp/stars entry in oppai-auto json output")
 			pp = output["pp"]
 			stars = output["stars"]
 
-			log.debug("oppai-relax ~> full output: {}".format(output))
-			log.debug("oppai-relax ~> pp: {}, stars: {}".format(pp, stars))
+			log.debug("oppai-auto ~> full output: {}".format(output))
+			log.debug("oppai-auto ~> pp: {}, stars: {}".format(pp, stars))
 		except (json.JSONDecodeError, IndexError, OppaiError) as e:
 			raise OppaiError(e)
 		return pp, stars
@@ -108,7 +105,6 @@ class oppai:
 	def calculatePP(self):
 		"""
 		Calculate total pp value with oppai and return it
-
 		return -- total pp
 		"""
 		# Set variables
@@ -116,7 +112,7 @@ class oppai:
 		try:
 			# Build .osu map file path
 			mapFile = mapsHelper.cachedMapPath(self.beatmap.beatmapID)
-			log.debug("oppai-relax ~> Map file: {}".format(mapFile))
+			log.debug("oppai-auto ~> Map file: {}".format(mapFile))
 			mapsHelper.cacheMap(mapFile, self.beatmap)
 
 			# Use only mods supported by oppai
@@ -126,9 +122,7 @@ class oppai:
 			if self.gameMode != gameModes.STD and self.gameMode != gameModes.TAIKO:
 				raise exceptions.unsupportedGameModeException()
 
-			command = "./pp/oppai-rx/oppai {}".format(mapFile)
-			if glob.conf.extra["lets"]["windows-mode"]["enabled"]:
-				command = "{} {}".format(glob.conf.extra["lets"]["windows-mode"]["oppai-rx-pp-path"], mapFile)
+			command = "./pp/oppai-ap/oppai {}".format(mapFile)
 			if not self.tillerino:
 				# force acc only for non-tillerino calculation
 				# acc is set for each subprocess if calculating tillerino-like pp sets
@@ -136,7 +130,7 @@ class oppai:
 					command += " {acc:.2f}%".format(acc=self.acc)
 			if self.mods > 0:
 				command += " +{mods}".format(mods=scoreUtils.readableMods(modsFixed))
-			if self.combo >= 0:
+			if self.combo > 0:
 				command += " {combo}x".format(combo=self.combo)
 			if self.misses > 0:
 				command += " {misses}xm".format(misses=self.misses)
@@ -169,22 +163,19 @@ class oppai:
 					pp_list.append(pp)
 				self.pp = pp_list
 
-			log.debug("oppai-relax ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
+			log.debug("oppai-auto ~> Calculated PP: {}, stars: {}".format(self.pp, self.stars))
 		except OppaiError:
-			log.error("oppai-relax ~> oppai-ng error!")
+			log.error("oppai-auto ~> oppai-ng error!")
 			self.pp = 0
 		except exceptions.osuApiFailException:
-			log.error("oppai-relax ~> osu!api error!")
+			log.error("oppai-auto ~> osu!api error!")
 			self.pp = 0
 		except exceptions.unsupportedGameModeException:
-			log.error("oppai-relax ~> Unsupported gamemode")
+			log.error("oppai-auto ~> Unsupported gamemode")
 			self.pp = 0
 		except Exception as e:
-			log.error("oppai-relax ~> Unhandled exception: {}".format(str(e)))
+			log.error("oppai-auto ~> Unhandled exception: {}".format(str(e)))
 			self.pp = 0
 			raise
 		finally:
-			log.debug("oppai-relax ~> Shutting down, pp = {}".format(self.pp))
-			
-# Aoba's horse food, loli flavours.
-# wtf aoba
+			log.debug("oppai-auto ~> Shutting down, pp = {}".format(self.pp))

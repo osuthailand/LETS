@@ -1,14 +1,22 @@
+# cache
 **/__pycache__
 **/build
+
+# PP System
 pp/oppai-rx-old/
+pp/a/
+
+# Privated Ainu stuff
+ainu
 storage
 config.ini
 .data
 .data-c
+
+# tons of crap
 runserver.bat
 cython_setup.bat
 .idea
-tomejerryrx.py
 common_copied
 common_refractor
 *.c

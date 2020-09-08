@@ -85,6 +85,7 @@ class config:
 			self.config.get("discord", "ahook")
 			self.config.get("discord", "score")
 			self.config.get("discord", "rxscore")
+			self.config.get("discord", "apscore")
 
 			self.config.get("cono", "enable")
 
@@ -154,6 +155,7 @@ class config:
 		self.config.set("discord", "ahook", "")
 		self.config.set("discord", "score", "")
 		self.config.set("discord", "rxscore", "")
+		self.config.set("discord", "apscore", "")
 
 		self.config.add_section("cono")
 		self.config.set("cono", "enable", "False")

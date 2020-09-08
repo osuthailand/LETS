@@ -1,3 +1,5 @@
+import random
+
 import requests
 import json
 
@@ -24,8 +26,10 @@ class handler(requestsManager.asyncRequestHandler):
 				bid = bid[:-1]
 			bid = int(bid)
 
+			mirror = ['https://storage.ainu.pw', 'https://aoba-proxy-us.herokuapp.com', 'https://aoba-proxy-eu.herokuapp.com']
+
 			self.set_status(302, "Moved Temporarily")
-			self.add_header("Location", "https://storage.ainu.pw/d/{}{}".format(bid, "?novideo" if noVideo else ""))
+			self.add_header("Location", "{}/d/{}{}".format(random.choice(mirror), bid, "n" if noVideo else ""))
 			self.add_header("Cache-Control", "no-cache")
 			self.add_header("Pragma", "no-cache")
 		except ValueError:

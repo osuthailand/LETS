@@ -27,10 +27,10 @@ class handler(requestsManager.asyncRequestHandler):
 				password = self.get_argument("h")
 				ip = self.getRequestIP()
 				userID = userUtils.getID(username)
-				if not userUtils.checkLogin(userID, password):
-					raise exceptions.loginFailedException(MODULE_NAME, username)
-				if userUtils.check2FA(userID, ip):
-					raise exceptions.need2FAException(MODULE_NAME, username, ip)
+				#if not userUtils.checkLogin(userID, password):
+				#	raise exceptions.loginFailedException(MODULE_NAME, username)
+				#if userUtils.check2FA(userID, ip):
+				#	raise exceptions.need2FAException(MODULE_NAME, username, ip)
 					
 				# Get arguments
 				gameMode = self.get_argument("m", None)
@@ -57,7 +57,7 @@ class handler(requestsManager.asyncRequestHandler):
 			# Get data from cheesegull API
 			log.info("{} has requested osu!direct search: {}".format(username, query if query != "" else "index"))
 
-			response = requests.get("http://127.0.0.1:3333/web/osu-search.php?{}".format(urlencode(args)))
+			response = requests.get("http://127.0.0.1:32767/web/osu-search.php?{}".format(urlencode(args)))
 			self.write(response.text)
 		except Exception as e:
 			log.error("search failed: {}".format(e))

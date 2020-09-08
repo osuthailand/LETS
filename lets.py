@@ -16,6 +16,7 @@ from distutils.version import LooseVersion
 
 from constants import rankedStatuses
 
+from common.ripple import userUtils
 from common.constants import bcolors, mods
 from common.db import dbConnector
 from common.ddog import datadogClient
@@ -33,6 +34,7 @@ from handlers import downloadMapHandler
 from handlers import emptyHandler
 from handlers import getFullReplayHandler
 from handlers import getFullReplayHandlerRelax
+from handlers import getFullReplayHandlerRelax2
 from handlers import getReplayHandler
 from handlers import getScoresHandler
 from handlers import getScreenshotHandler
@@ -89,6 +91,7 @@ def make_app():
 		(r"/s/(.*)", downloadMapHandler.handler),
 		(r"/web/replays/(.*)", getFullReplayHandler.handler),
 		(r"/web/replays_relax/(.*)", getFullReplayHandlerRelax.handler),
+		(r"/web/replays_autopilot/(.*)", getFullReplayHandlerRelax2.handler),
 		(r"/web/errorlogs/(.*)", getFullErrorHandler.handler),
 
 		(r"/p/verify", redirectHandler.handler, dict(destination="https://ainu.pw/")),
@@ -106,11 +109,14 @@ def make_app():
 		# Remove or comment this if you're Ainu clones
 		(r"/web/check-updates-ainu.php", checkUpdatesHandler.handler),
 		#(r"/web/check-updates-ainu.php", checkAinuUpdatesHandler.handler),
+
 		(r"/web/osu-osz2-bmsubmit-getid.php", osz2GetId.handler),
 		(r"/web/osu-osz2-bmsubmit-upload.php", osz2Upload.handler),
-		
+
 		# Not done yet
-		(r"/web/osu-osz2-bmsubmit-post.php",emptyHandler.handler),
+		(r"/web/osu-getbeatmapinfo.php", emptyHandler.handler),
+		(r"/web/osu-getfriends.php", emptyHandler.handler),
+		(r"/web/osu-osz2-bmsubmit-post.php", emptyHandler.handler),
 		(r"/web/osu-get-beatmap-topic.php", emptyHandler.handler), # Beatmap Topic
 		(r"/web/osu-markasread.php", emptyHandler.handler), # Mark As Read
 		(r"/web/osu-addfavourite.php", emptyHandler.handler), # Add Favorite
@@ -310,6 +316,7 @@ if __name__ == "__main__":
 		except:
 			consoleHelper.printColored("[!] Error while starting Datadog client! Please check your config.ini and run the server again", bcolors.RED)
 
+
 		# Connect to pubsub channels
 		pubSub.listener(glob.redis, {
 			"lets:beatmap_updates": beatmapUpdateHandler.handler(),
@@ -317,6 +324,7 @@ if __name__ == "__main__":
 
 		# Server start message and console output
 		consoleHelper.printColored("> L.E.T.S. is listening for clients on {}:{}...".format(glob.conf.config["server"]["host"], serverPort), bcolors.GREEN)
+		consoleHelper.printColored("> Verified players: {}".format(userUtils.getLegitPlayers()), bcolors.GREEN)
 		log.logMessage("Server started!", discord="bunker", stdout=False)
 
 		# Start Tornado

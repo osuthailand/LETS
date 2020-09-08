@@ -8,9 +8,9 @@ import objects.glob
 
 
 class beatmap:
-	__slots__ = ("songName", "artist", "creator", "title", "version", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
-	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "CS", "HP", "maxCombo", "hitLength",
-	             "bpm", "mode", "rankingDate", "playcount" ,"passcount", "refresh", "fileName")
+	__slots__ = ("songName", "artist", "creator", "creator_id", "title", "version", "fileMD5", "rankedStatus", "rankedStatusFrozen", "beatmapID", "beatmapSetID", "offset",
+	             "rating", "starsStd", "starsTaiko", "starsCtb", "starsMania", "AR", "OD", "CS", "HP", "circles", "sliders", "maxCombo", "hitLength",
+	             "bpm", "mode", "submitted", "rankingDate", "playcount" ,"passcount", "refresh", "fileName")
 
 	def __init__(self, md5 = None, beatmapSetID = None, gameMode = 0, refresh=False, fileName=None):
 		"""
@@ -23,6 +23,7 @@ class beatmap:
 		# Add stuff for future features for api
 		self.artist = ""
 		self.creator = ""
+		self.creator_id = ""
 		self.title = ""
 		self.version = ""
 		self.fileMD5 = ""
@@ -42,10 +43,14 @@ class beatmap:
 		self.OD = 0.0
 		self.CS = 0.0
 		self.HP = 0.0
+		self.circles = 0
+		self.sliders = 0
 		self.maxCombo = 0
 		self.hitLength = 0
 		self.bpm = 0
 		self.mode = 0
+
+		self.submitted = 0
 
 		self.rankingDate = 0
 
@@ -115,10 +120,14 @@ class beatmap:
 			frozen,
 			self.artist,
 			self.creator,
+			self.creator_id,
+			self.submitted,
 			self.title,
 			self.version,
 			self.CS,
 			self.HP,
+			self.circles,
+			self.sliders,
 			self.mode
 		#)
 		]
@@ -128,8 +137,8 @@ class beatmap:
 			"INSERT INTO `beatmaps` (`id`, `beatmap_id`, `beatmapset_id`, `beatmap_md5`, `song_name`, "
 			"`ar`, `od`, `difficulty_std`, `difficulty_taiko`, `difficulty_ctb`, `difficulty_mania`, "
 			"`max_combo`, `hit_length`, `bpm`, `ranked`, "
-			"`latest_update`, `ranked_status_freezed`, `artist`, `creator`, `title`, `version`, `cs`, `hp`, `mode`{extra_q}) "
-			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s{extra_p})".format(
+			"`latest_update`, `ranked_status_freezed`, `artist`, `creator`, `creator_id`, `submitted`, `title`, `version`, `cs`, `hp`, `circles`, `sliders`, `mode`{extra_q}) "
+			"VALUES (NULL, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s{extra_p})".format(
 				extra_q=", `file_name`" if self.fileName is not None else "",
 				extra_p=", %s" if self.fileName is not None else "",
 			), params
@@ -208,10 +217,14 @@ class beatmap:
 		self.passcount = int(data["passcount"]) if "passcount" in data else 0
 		self.artist = data["artist"]
 		self.creator = data["creator"]
+		self.creator_id = data["creator_id"]
+		self.submitted = int(data["submitted"])
 		self.title = data["title"]
 		self.version = data["version"]
 		self.CS = float(data["cs"])
 		self.HP = float(data["hp"])
+		self.circles = int(data["circles"])
+		self.sliders = int(data["sliders"])
 		self.mode = int(data["mode"])
 
 	def setDataFromOsuApi(self, md5, beatmapSetID):
@@ -279,8 +292,12 @@ class beatmap:
 		self.beatmapSetID = int(mainData["beatmapset_id"])
 		self.AR = float(mainData["diff_approach"])
 		self.OD = float(mainData["diff_overall"])
+		self.circles = int(mainData["count_normal"])
+		self.sliders = int(mainData["count_slider"])
 		self.artist = "{}".format(mainData["artist"])
 		self.creator = "{}".format(mainData["creator"])
+		self.creator_id = int(mainData["creator_id"])
+		self.submitted = int(time.mktime(datetime.datetime.strptime(mainData["submit_date"], "%Y-%m-%d %H:%M:%S").timetuple()))
 		self.title = "{}".format(mainData["title"])
 		self.version = "{}".format(mainData["version"])
 		# Determine stars for every mode
