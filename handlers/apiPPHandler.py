@@ -104,6 +104,8 @@ class handler(requestsManager.asyncRequestHandler):
 					cachedPP = bmap.getCachedTillerinoPP()
 					if (modsEnum&mods.RELAX):
 						cachedPP = [0,0,0,0]
+					elif (modsEnum&mods.RELAX2):
+						cachedPP = [0,0,0,0]
 
 					if cachedPP != [0,0,0,0]:
 						log.debug("Got cached pp.")
@@ -113,14 +115,14 @@ class handler(requestsManager.asyncRequestHandler):
 						# Cached pp not found, calculate them
 						if gameMode == gameModes.STD and (modsEnum&mods.RELAX):
 							oppai = relaxoppai.oppai(bmap, mods=modsEnum, tillerino=True)
-						elif gameMode == gameModes.STD and (modsEnum&mods.AUTOPILOT):
+						elif gameMode == gameModes.STD and (modsEnum&mods.RELAX2):
 							oppai = relax2oppai.oppai(bmap, mods=modsEnum, tillerino=True)
 						else:
 							oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 						returnPP = oppai.pp
 						bmap.starsStd = oppai.stars
 
-						if not (modsEnum&mods.RELAX):
+						if not (modsEnum&mods.RELAX) or (modsEnum&mods.RELAX2):
 							# Cache values in DB
 							log.debug("Saving cached pp...")
 							if type(returnPP) == list and len(returnPP) == 4:
@@ -131,6 +133,8 @@ class handler(requestsManager.asyncRequestHandler):
 					log.debug("Specific request ({}%/{}). Calculating pp with oppai...".format(accuracy, modsEnum))
 					if gameMode == gameModes.STD and (modsEnum&mods.RELAX):
 						oppai = relaxoppai.oppai(bmap, mods=modsEnum, tillerino=True)
+					elif gameMode == gameModes.STD and (modsEnum&mods.RELAX2):
+						oppai = relax2oppai.oppai(bmap, mods=modsEnum, tillerino=True)
 					else:
 						oppai = rippoppai.oppai(bmap, mods=modsEnum, tillerino=True)
 					bmap.starsStd = oppai.stars
