@@ -65,11 +65,11 @@ class handler(requestsManager.asyncRequestHandler):
 
 			# Check arguments
 			if glob.conf.extra["lets"]["submit"]["ignore-x-flag"]:
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "osuver"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "s", "st", "osuver"]):
 				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 			else:
-				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "osuver"]):
+				if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x", "s", "st", "osuver"]):
 				#if not requestsManager.checkArguments(self.request.arguments, ["score", "iv", "pass", "x"]):
 					raise exceptions.invalidArgumentsException(MODULE_NAME)
 
@@ -128,7 +128,6 @@ class handler(requestsManager.asyncRequestHandler):
 			# Set score submission lock
 			log.debug("Setting score submission lock {}".format(lock_key))
 			glob.redis.set(lock_key, "1", 120)
- 
 				
 			# Bancho session/username-pass combo check
 			if not userUtils.checkLogin(userID, password, ip):
